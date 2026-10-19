@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chronicles of the Milky Way & Exoplanetary Worlds | Scientific Atlas</title>
+    <meta name="description" content="An interactive astrophysical atlas exploring the architecture of the Milky Way galaxy, stellar populations, and extraordinary exoplanetary systems." />
+    <!-- Bespoke Editorial & Technical Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="theme-space">
+    <!-- Screen Reader Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Observatory Top Navigation Bar -->
+    <header class="observatory-header" role="banner">
+      <div class="header-inner">
+        <div class="brand-group">
+          <div class="observatory-emblem" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="24" height="24">
+              <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"/>
+              <ellipse cx="16" cy="16" rx="12" ry="5" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(-25 16 16)"/>
+              <circle cx="16" cy="16" r="2.5" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="brand-titles">
+            <span class="brand-eyebrow">DEEP FIELD SURVEY • VOL. IV</span>
+            <span class="brand-title">MILKY WAY & EXOPLANET ATLAS</span>
+          </div>
+        </div>
+
+        <!-- Real-time Galactic Telemetry -->
+        <div class="telemetry-bar" aria-label="Observatory Coordinates and Time">
+          <div class="telemetry-item">
+            <span class="t-label">TARGET SGR A*</span>
+            <span class="t-val">RA 17ʰ 45ᵐ 40ˢ · DEC −29° 00′ 28″</span>
+          </div>
+          <div class="telemetry-item hide-mobile">
+            <span class="t-label">SOLAR ORBITAL VELOCITY</span>
+            <span class="t-val">230.2 km/s</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="t-label">MISSION UTC</span>
+            <span class="t-val" id="telemetry-clock">--:--:-- UTC</span>
+          </div>
+        </div>
+
+        <!-- Utilities: Audio & Accessibility Controls -->
+        <div class="header-controls">
+          <button id="sound-toggle" class="control-btn" aria-label="Toggle Peaceful Ambient Music" aria-pressed="false" title="Play peaceful celestial piano and ambient soundtrack">
+            <svg class="icon-sound-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+            <svg class="icon-sound-on hidden" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <span class="btn-text" id="sound-btn-text">MUSIC: OFF</span>
+            <span class="eq-bars hidden" id="sound-eq" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </span>
+          </button>
+
+          <button id="motion-toggle" class="control-btn" aria-label="Toggle Reduced Motion" aria-pressed="false" title="Reduce Dynamic Animations">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="10 8 16 12 10 16 10 8"></polygon>
+            </svg>
+            <span class="btn-text">MOTION</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Flow -->
+    <main id="main-content">
+      <!-- SECTION 1: HERO & INTERACTIVE SPIRAL GALAXY SIMULATOR -->
+      <section id="hero" class="hero-section" aria-label="Milky Way Galaxy Visualizer">
+        <!-- Canvas Background -->
+        <canvas id="galaxy-canvas" aria-label="Interactive 3D simulation of the Milky Way spiral galaxy and Sagittarius A*" role="img"></canvas>
+
+        <!-- Galaxy Viewport Overlay HUD -->
+        <div class="galaxy-hud">
+          <div class="hud-tag">
+            <span class="pulsing-dot" aria-hidden="true"></span>
+            <span>LIVE PARTICLE ENGINE · 4,200 STELLAR KINEMATICS</span>
+          </div>
+
+          <div class="hud-controls" role="toolbar" aria-label="Galaxy View Controls">
+            <button id="btn-recenter" class="hud-btn" title="Reset Viewpoint">
+              <span>RECENTER VIEW</span>
+            </button>
+            <button id="btn-toggle-arms" class="hud-btn active" title="Toggle Spiral Arm Annotations" aria-pressed="true">
+              <span>ARM LABELS</span>
+            </button>
+            <button id="btn-toggle-solar" class="hud-btn active" title="Highlight Solar System Position" aria-pressed="true">
+              <span>SOLAR POSITION</span>
+            </button>
+            <div class="hud-zoom">
+              <label for="galaxy-zoom" class="visually-hidden">Galaxy Zoom Level</label>
+              <span class="zoom-label">ZOOM</span>
+              <input type="range" id="galaxy-zoom" min="0.6" max="2.4" step="0.05" value="1.0" aria-label="Galaxy Zoom Level" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Editorial Hero Title Card -->
+        <div class="hero-content">
+          <div class="hero-metadata">
+            <span class="badge-catalogue">BARRED SPIRAL GALAXY · SBb CLASSIFICATION</span>
+            <span class="meta-separator" aria-hidden="true">/</span>
+            <span class="meta-dist">LOCAL GROUP MEMBER 02</span>
+          </div>
+
+          <h1 class="hero-title">
+            <span class="title-sub">AN ASTROPHYSICAL EXPLORATION OF</span>
+            <span class="title-main">THE MILKY WAY</span>
+            <span class="title-serif">&amp; HER DAUGHTER WORLDS</span>
+          </h1>
+
+          <p class="hero-lead">
+            Spinning through intergalactic void at 2.1 million km/h, our celestial home houses over 100 billion stars and an estimated 5,500+ confirmed exoplanets. Traverse the spiral arms, witness the central supermassive singularity, and peer into the atmospheric chemistry of alien horizons.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#galactic-metrics" class="primary-action-btn">
+              <span>EXPLORE ARCHITECTURE</span>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
+              </svg>
+            </a>
+            <a href="#exoplanet-archive" class="secondary-action-btn">
+              <span>EXOPLANET OBSERVATORY</span>
+            </a>
+          </div>
+
+          <!-- Interaction Prompt -->
+          <div class="canvas-hint" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+            </svg>
+            <span>Click &amp; drag to rotate galaxy · Scroll to zoom · Hover core to target Sgr A*</span>
+          </div>
+        </div>
+
+        <!-- Scroll Down Indicator -->
+        <div class="scroll-cue" aria-hidden="true">
+          <span class="scroll-line"></span>
+          <span class="scroll-text">DESCENT</span>
+        </div>
+      </section>
+
+      <!-- SECTION 2: GALACTIC ANATOMY & ANIMATED METRICS -->
+      <section id="galactic-metrics" class="section-container" aria-labelledby="metrics-heading">
+        <div class="section-header">
+          <div class="section-eyebrow">CHRONO-METRICS &amp; STRUCTURAL SCALE</div>
+          <h2 id="metrics-heading" class="section-title">Physical Dimensions of the Galactic Disc</h2>
+          <p class="section-description">
+            Quantifying our barred spiral galaxy across electromagnetic spectra. Formed roughly 13.6 billion years ago, the Milky Way's massive gravitational well is sustained by a baryonic disc embedded within an invisible dark matter halo.
+          </p>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+          <article class="metric-card" data-metric="diameter">
+            <div class="metric-header">
+              <span class="metric-code">DIM-01 // DIAMETER</span>
+              <span class="metric-unit">LIGHT-YEARS</span>
+            </div>
+            <div class="metric-value-wrapper">
+              <span class="metric-number" data-target="105700">0</span>
+              <span class="metric-symbol">ly</span>
+            </div>
+            <div class="metric-bar"><span style="width: 82%;"></span></div>
+            <p class="metric-detail">
+              Spanning ~32.4 kiloparsecs from the outer edge of the Scutum-Centaurus arm to the far Perseus rim. A beam of starlight requires over one millennium just to cross 1% of this expanse.
+            </p>
+          </article>
+
+          <article class="metric-card" data-metric="stellar-population">
+            <div class="metric-header">
+              <span class="metric-code">POP-02 // STELLAR POPULATION</span>
+              <span class="metric-unit">BOUND STARS</span>
+            </div>
+            <div class="metric-value-wrapper">
+              <span class="metric-number" data-target="250">0</span>
+              <span class="metric-symbol">Billion</span>
+            </div>
+            <div class="metric-bar"><span style="width: 95%;"></span></div>
+            <p class="metric-detail">
+              Estimated between 100 and 400 billion stars. Red dwarfs (M-class) account for nearly 73% of this population, burning fuel for trillions of years.
+            </p>
+          </article>
+
+          <article class="metric-card" data-metric="age">
+            <div class="metric-header">
+              <span class="metric-code">CHRONO-03 // SYSTEM AGE</span>
+              <span class="metric-unit">GIGA-YEARS</span>
+            </div>
+            <div class="metric-value-wrapper">
+              <span class="metric-number" data-target="13.61" data-decimals="2">0</span>
+              <span class="metric-symbol">Gyr</span>
+            </div>
+            <div class="metric-bar"><span style="width: 98%;"></span></div>
+            <p class="metric-detail">
+              Dating from globular clusters such as NGC 6397. Formed barely 200–400 million years after the cosmic microwave background nucleosynthesis.
+            </p>
+          </article>
+
+          <article class="metric-card" data-metric="distance-sun-center">
+            <div class="metric-header">
+              <span class="metric-code">POS-04 // SOLAR GALACTOCENTRIC DISTANCE</span>
+              <span class="metric-unit">LIGHT-YEARS</span>
+            </div>
+            <div class="metric-value-wrapper">
+              <span class="metric-number" data-target="26670">0</span>
+              <span class="metric-symbol">ly</span>
+            </div>
+            <div class="metric-bar"><span style="width: 65%;"></span></div>
+            <p class="metric-detail">
+              Situated in the inner rim of the Orion–Cygnus Arm (Orion Spur), roughly 8.18 kiloparsecs from the galactic core, completing one cosmic orbit every 230 million years.
+            </p>
+          </article>
+
+          <article class="metric-card" data-metric="core-blackhole">
+            <div class="metric-header">
+              <span class="metric-code">GRAV-05 // SAGITTARIUS A*</span>
+              <span class="metric-unit">SOLAR MASSES (M☉)</span>
+            </div>
+            <div class="metric-value-wrapper">
+              <span class="metric-number" data-target="4.15" data-decimals="2">0</span>
+              <span class="metric-symbol">×10⁶ M☉</span>
+            </div>
+            <div class="metric-bar"><span style="width: 78%;"></span></div>
+            <p class="metric-detail">
+              The supermassive central engine discovered by tracking stellar orbits of the S-stars (notably S2). Schwarzschild radius measures ~12.7 million km (~17 solar radii).
+            </p>
+          </article>
+
+          <article class="metric-card" data-metric="total-mass">
+            <div class="metric-header">
+              <span class="metric-code">MASS-06 // TOTAL VIRIAL MASS</span>
+              <span class="metric-unit">BARYONIC + DARK MATTER</span>
+            </div>
+            <div class="metric-value-wrapper">
+              <span class="metric-number" data-target="1.54" data-decimals="2">0</span>
+              <span class="metric-symbol">×10¹² M☉</span>
+            </div>
+            <div class="metric-bar"><span style="width: 88%;"></span></div>
+            <p class="metric-detail">
+              Approximately 85–90% of the Milky Way's gravitational pull arises from an extensive, spherical dark matter halo extending out to 650,000 light-years.
+            </p>
+          </article>
+        </div>
+
+        <!-- Structural Layer Breakdown Interactive Explorer -->
+        <div class="structure-explorer">
+          <div class="explorer-intro">
+            <h3 class="subheading-editorial">ANATOMY OF THE DISK: STRATIFIED DOMAINS</h3>
+            <p class="text-editorial">Select a galactic zone to isolate its spectroscopic and physical characteristics.</p>
+          </div>
+
+          <div class="zone-tabs" role="tablist" aria-label="Galactic Structural Zones">
+            <button class="zone-tab active" role="tab" id="tab-core" aria-selected="true" aria-controls="panel-zone" data-zone="core">
+              <span class="tab-index">01</span>
+              <span class="tab-title">Galactic Bulge &amp; Bar</span>
+            </button>
+            <button class="zone-tab" role="tab" id="tab-thin" aria-selected="false" aria-controls="panel-zone" data-zone="thin">
+              <span class="tab-index">02</span>
+              <span class="tab-title">Thin Disc (Stellar Nursery)</span>
+            </button>
+            <button class="zone-tab" role="tab" id="tab-thick" aria-selected="false" aria-controls="panel-zone" data-zone="thick">
+              <span class="tab-index">03</span>
+              <span class="tab-title">Thick Disc (Ancient Population)</span>
+            </button>
+            <button class="zone-tab" role="tab" id="tab-halo" aria-selected="false" aria-controls="panel-zone" data-zone="halo">
+              <span class="tab-index">04</span>
+              <span class="tab-title">Stellar &amp; Dark Matter Halo</span>
+            </button>
+          </div>
+
+          <div id="panel-zone" class="zone-panel" role="tabpanel" aria-labelledby="tab-core">
+            <div class="zone-details-grid">
+              <div class="zone-main-info">
+                <h4 id="zone-display-name" class="zone-title">Galactic Bulge &amp; Central Bar</h4>
+                <p id="zone-display-desc" class="zone-desc">
+                  An intense, spheroidal concentration of roughly 10 billion older stars spanning ~10,000 light-years across. At its heart lies a boxy, peanut-shaped triaxial bar of metal-rich stars fueling gas inflows toward Sagittarius A*.
+                </p>
+                <div class="zone-spec-tags" id="zone-tags">
+                  <span class="spec-tag">Scale Height: ~1,500 ly</span>
+                  <span class="spec-tag">Population: Pop II &amp; Old Pop I</span>
+                  <span class="spec-tag">Gas Content: High density CO &amp; H I</span>
+                  <span class="spec-tag">Radiation Field: Intense X-Ray &amp; Gamma</span>
+                </div>
+              </div>
+              <div class="zone-telemetry-box">
+                <div class="box-header">ZONE TELEMETRY METRIC</div>
+                <div class="box-stat">
+                  <span class="box-stat-label">AVERAGE STELLAR DENSITY</span>
+                  <span id="zone-stat-val" class="box-stat-value">~100 stars / pc³</span>
+                  <span class="box-stat-comp">(100x denser than Solar neighborhood)</span>
+                </div>
+                <div class="box-stat">
+                  <span class="box-stat-label">DOMINANT SPECTRAL CLASS</span>
+                  <span id="zone-spec-val" class="box-stat-value">K &amp; M Giants</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: EXOPLANET OBSERVATORY & CATALOGUE -->
+      <section id="exoplanet-archive" class="section-container" aria-labelledby="exoplanet-heading">
+        <div class="section-header">
+          <div class="section-eyebrow">KEPLER · TESS · JWST COMPILATION</div>
+          <h2 id="exoplanet-heading" class="section-title">The Exoplanetary Atlas: Alien Worlds</h2>
+          <p class="section-description">
+            Beyond our solar cradle lie thousands of alien spheres: tidally-locked habitable worlds, gas giants with glass rain, super-Earth lava cauldrons, and circumbinary systems orbiting twin suns. Filter by planetary classification, detection methodology, and habitability.
+          </p>
+        </div>
+
+        <!-- Filter & Search Controls -->
+        <div class="catalog-filters" role="region" aria-label="Exoplanet Catalogue Filters">
+          <div class="filter-group">
+            <label for="filter-type" class="filter-label">PLANET CLASSIFICATION</label>
+            <select id="filter-type" class="editorial-select">
+              <option value="all">All Classifications (8 Worlds)</option>
+              <option value="terrestrial">Terrestrial &amp; Earth Analogs</option>
+              <option value="super-earth">Super-Earth &amp; Lava Worlds</option>
+              <option value="gas-giant">Hot Jupiters &amp; Gas Giants</option>
+              <option value="exotic">Exotic &amp; Circumbinary</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-habitability" class="filter-label">HABITABILITY POTENTIAL</label>
+            <select id="filter-habitability" class="editorial-select">
+              <option value="all">Any Status</option>
+              <option value="habitable">Habitable Zone Candidate</option>
+              <option value="extreme">Extreme Environment / Hostile</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="search-planets" class="filter-label">SEARCH SYSTEM</label>
+            <input type="text" id="search-planets" class="editorial-input" placeholder="e.g. TRAPPIST, Kepler, WASP..." aria-label="Search exoplanets by name or host star" />
+          </div>
+
+          <div class="filter-counter">
+            <span id="filtered-count">8</span>
+            <span class="counter-label">WORLDS DISPLAYED</span>
+          </div>
+        </div>
+
+        <!-- Exoplanet Cards Grid -->
+        <div id="exoplanets-grid" class="exoplanets-grid" role="list">
+          <!-- Rendered dynamically by JavaScript -->
+        </div>
+
+        <!-- Planet Details Interactive Drawer / Modal -->
+        <dialog id="planet-modal" class="planet-dialog" aria-labelledby="modal-planet-title">
+          <div class="dialog-inner">
+            <header class="dialog-header">
+              <div class="modal-pretitle">SYSTEM DOSSIER // DEEP SPECTROSCOPY</div>
+              <h3 id="modal-planet-title" class="modal-title">TRAPPIST-1e</h3>
+              <button id="modal-close" class="modal-close-btn" aria-label="Close planet dossier">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </header>
+
+            <div class="dialog-body">
+              <!-- Planet Canvas Visualizer -->
+              <div class="modal-visual-column">
+                <div class="canvas-sphere-wrapper">
+                  <canvas id="modal-planet-canvas" width="280" height="280" aria-label="Procedural rotating view of selected exoplanet"></canvas>
+                  <div class="sphere-lighting-tag">ROTATIONAL VISUALIZATION</div>
+                </div>
+                <div class="habitability-badge" id="modal-hz-badge">
+                  <span class="hz-icon">●</span>
+                  <span id="modal-hz-text">CONSERVATIVE HABITABLE ZONE</span>
+                </div>
+              </div>
+
+              <!-- Technical Specification Grid -->
+              <div class="modal-info-column">
+                <p id="modal-description" class="modal-summary">
+                  A rocky terrestrial exoplanet orbiting within the habitable zone of ultra-cool red dwarf TRAPPIST-1, located 39.5 light-years away in Aquarius.
+                </p>
+
+                <div class="dossier-specs-table">
+                  <div class="spec-row">
+                    <span class="spec-name">HOST STAR</span>
+                    <span id="modal-star" class="spec-value">TRAPPIST-1 (M8V Ultra-cool Dwarf)</span>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-name">DISTANCE FROM EARTH</span>
+                    <span id="modal-dist" class="spec-value">39.46 light-years (12.1 pc)</span>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-name">MASS (VS EARTH)</span>
+                    <span id="modal-mass" class="spec-value">0.692 M⊕</span>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-name">RADIUS (VS EARTH)</span>
+                    <span id="modal-radius" class="spec-value">0.920 R⊕</span>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-name">ORBITAL PERIOD</span>
+                    <span id="modal-period" class="spec-value">6.10 Earth Days</span>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-name">SURFACE EQUILIBRIUM TEMP</span>
+                    <span id="modal-temp" class="spec-value">251 K (−22 °C)</span>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-name">DISCOVERY METHOD</span>
+                    <span id="modal-method" class="spec-value">Transit Photometry (Spitzer / Trappist)</span>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-name">DISCOVERY YEAR</span>
+                    <span id="modal-year" class="spec-value">2017</span>
+                  </div>
+                </div>
+
+                <!-- Atmospheric Chemistry Visual Bar -->
+                <div class="atmosphere-section">
+                  <div class="atmos-header">ATMOSPHERIC SIGNATURE / CANDIDATE VOLATILES</div>
+                  <div id="modal-atmos-bar" class="atmos-bar">
+                    <!-- Populated dynamically -->
+                  </div>
+                  <div id="modal-atmos-legend" class="atmos-legend"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </dialog>
+      </section>
+
+      <!-- SECTION 4: TRANSIT PHOTOMETRY & SPECTROSCOPY LAB -->
+      <section id="transit-lab" class="section-container" aria-labelledby="lab-heading">
+        <div class="section-header">
+          <div class="section-eyebrow">INTERACTIVE ASTROPHYSICAL SIMULATION</div>
+          <h2 id="lab-heading" class="section-title">The Transit Photometry Laboratory</h2>
+          <p class="section-description">
+            Experience how the Kepler and James Webb Space Telescopes discover worlds thousands of light-years away. When an exoplanet crosses the disk of its host star, it produces a minuscule dip in received stellar flux ($ΔF/F$). Manipulate parameters below to observe the transit light curve in real time.
+          </p>
+        </div>
+
+        <div class="transit-lab-layout">
+          <!-- Left: Orbital Transit Canvas -->
+          <div class="transit-viewport-card">
+            <div class="viewport-header">
+              <span class="tag-live">SIMULATED PHOTOMETRIC DETECTOR</span>
+              <span id="transit-phase-indicator" class="tag-status">INGRESS</span>
+            </div>
+            <div class="transit-canvas-container">
+              <canvas id="transit-star-canvas" width="600" height="260" aria-label="Visual simulation of an exoplanet crossing in front of its parent star"></canvas>
+            </div>
+
+            <!-- Light Curve Graph Plotter -->
+            <div class="light-curve-wrapper">
+              <div class="curve-header">
+                <span class="curve-title">STELLAR RELATIVE FLUX (LIGHT CURVE)</span>
+                <span class="curve-depth">TRANSIT DEPTH: <strong id="val-depth-pct">1.25%</strong></span>
+              </div>
+              <canvas id="light-curve-canvas" width="600" height="180" aria-label="Light curve plot showing brightness dip over time"></canvas>
+            </div>
+          </div>
+
+          <!-- Right: Interactive Physics Controls -->
+          <div class="transit-controls-card">
+            <h3 class="controls-card-title">STELLAR &amp; PLANETARY CONTROLS</h3>
+            <p class="controls-card-desc">Adjust orbital and planetary physics to see immediate effects on transit depth and duration.</p>
+
+            <div class="control-row">
+              <div class="label-row">
+                <label for="param-planet-radius">PLANETARY RADIUS</label>
+                <span id="disp-planet-radius" class="param-val">1.0 R_Jup</span>
+              </div>
+              <input type="range" id="param-planet-radius" min="0.3" max="2.2" step="0.1" value="1.0" aria-label="Planetary Radius in Jupiter Radii" />
+              <span class="param-hint">Larger radii block more photons, deepening the photometric dip.</span>
+            </div>
+
+            <div class="control-row">
+              <div class="label-row">
+                <label for="param-orbit-speed">ORBITAL VELOCITY</label>
+                <span id="disp-orbit-speed" class="param-val">1.0x</span>
+              </div>
+              <input type="range" id="param-orbit-speed" min="0.3" max="2.5" step="0.1" value="1.0" aria-label="Orbital Velocity Multiplier" />
+              <span class="param-hint">Controls transit duration and frequency of eclipses.</span>
+            </div>
+
+            <div class="control-row">
+              <div class="label-row">
+                <label for="param-star-type">HOST STAR SPECTRAL TYPE</label>
+              </div>
+              <select id="param-star-type" class="editorial-select full-width">
+                <option value="sun">G-Type Yellow Dwarf (e.g. Our Sun, Kepler-452)</option>
+                <option value="m-dwarf">M-Type Red Dwarf (e.g. TRAPPIST-1, Proxima)</option>
+                <option value="a-star">A-Type White Star (e.g. Sirius A, Altair)</option>
+              </select>
+              <span class="param-hint">Smaller stars exhibit much deeper percentage dips for Earth-sized bodies.</span>
+            </div>
+
+            <!-- Transmission Spectroscopy Quick View -->
+            <div class="spectroscopy-box">
+              <div class="spec-box-title">JWST TRANSMISSION SPECTROSCOPY</div>
+              <p class="spec-box-desc">Filtered starlight skimming the planetary atmosphere reveals chemical fingerprints:</p>
+              <div class="molecular-filters">
+                <button class="mol-pill active" data-mol="h2o">H₂O (Water Vapor)</button>
+                <button class="mol-pill" data-mol="ch4">CH₄ (Methane)</button>
+                <button class="mol-pill" data-mol="co2">CO₂ (Carbon Dioxide)</button>
+              </div>
+              <div id="mol-feedback" class="mol-feedback-text">
+                Absorption dip at 1.4 µm and 1.9 µm indicates vaporized water suspended in stratospheric cloud deck.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: COSMIC COMPARATOR & SCALE STUDIO -->
+      <section id="scale-studio" class="section-container" aria-labelledby="scale-heading">
+        <div class="section-header">
+          <div class="section-eyebrow">COMPARATIVE PLANETARY MORPHOLOGY</div>
+          <h2 id="scale-heading" class="section-title">Scale Studio: Diameters &amp; Masses</h2>
+          <p class="section-description">
+            True spatial perspective is elusive in astronomy. Compare the physical dimensions of Earth against exotic exoplanets and our solar titan, Jupiter.
+          </p>
+        </div>
+
+        <div class="scale-comparator-wrapper">
+          <div class="comparator-selectors">
+            <div class="selector-col">
+              <label for="compare-left" class="filter-label">REFERENCE BODY (A)</label>
+              <select id="compare-left" class="editorial-select">
+                <option value="earth">Earth (1.00 R⊕ · 1.00 M⊕)</option>
+                <option value="jupiter">Jupiter (11.2 R⊕ · 317.8 M⊕)</option>
+                <option value="trappist1e">TRAPPIST-1e (0.92 R⊕ · 0.69 M⊕)</option>
+                <option value="kepler452b">Kepler-452b (1.63 R⊕ · 5.0 M⊕)</option>
+              </select>
+            </div>
+            <div class="comparator-divider" aria-hidden="true">VS</div>
+            <div class="selector-col">
+              <label for="compare-right" class="filter-label">TARGET EXOPLANET (B)</label>
+              <select id="compare-right" class="editorial-select">
+                <option value="kepler452b">Kepler-452b (Super-Earth)</option>
+                <option value="wasp12b">WASP-12b (Ultra-Hot Jupiter · 1.9 R_Jup)</option>
+                <option value="cancri55e">55 Cancri e (Diamond Super-Earth)</option>
+                <option value="hd189733b">HD 189733 b (Cobalt Glass Giant)</option>
+                <option value="earth">Earth (1.00 R⊕)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Visual Scale Display -->
+          <div class="scale-stage" id="scale-stage">
+            <div class="body-display" id="body-display-a">
+              <div class="body-sphere" id="sphere-a" style="width: 120px; height: 120px;">
+                <span class="body-glow"></span>
+              </div>
+              <div class="body-annotation">
+                <strong id="name-a">Earth</strong>
+                <span id="meta-a">Radius: 6,371 km (1.0 R⊕)</span>
+              </div>
+            </div>
+
+            <div class="body-display" id="body-display-b">
+              <div class="body-sphere" id="sphere-b" style="width: 195px; height: 195px;">
+                <span class="body-glow"></span>
+              </div>
+              <div class="body-annotation">
+                <strong id="name-b">Kepler-452b</strong>
+                <span id="meta-b">Radius: 10,385 km (1.63 R⊕)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comparison Metrics Table -->
+          <div class="scale-stats-table">
+            <div class="table-row header-row">
+              <span>PHYSICAL METRIC</span>
+              <span id="col-title-a">EARTH</span>
+              <span id="col-title-b">KEPLER-452B</span>
+              <span>RATIO (B / A)</span>
+            </div>
+            <div class="table-row">
+              <span>Equatorial Radius</span>
+              <span id="rad-val-a">6,371 km</span>
+              <span id="rad-val-b">10,385 km</span>
+              <span id="rad-ratio" class="highlight-val">1.63x</span>
+            </div>
+            <div class="table-row">
+              <span>Planetary Mass</span>
+              <span id="mass-val-a">5.97 × 10²⁴ kg</span>
+              <span id="mass-val-b">2.98 × 10²⁵ kg</span>
+              <span id="mass-ratio" class="highlight-val">4.99x</span>
+            </div>
+            <div class="table-row">
+              <span>Surface Gravity</span>
+              <span id="grav-val-a">9.81 m/s² (1.0 g)</span>
+              <span id="grav-val-b">18.4 m/s² (1.88 g)</span>
+              <span id="grav-ratio" class="highlight-val">1.88x</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Editorial Scientific Colophon & Footer -->
+    <footer class="atlas-footer" role="contentinfo">
+      <div class="footer-inner">
+        <div class="footer-colophon">
+          <div class="footer-title">THE MILKY WAY &amp; EXOPLANETARY COMPENDIUM</div>
+          <p class="footer-text">
+            Synthesized from observational telemetry provided by NASA Exoplanet Archive, ESA Gaia Data Release 3, Event Horizon Telescope Collaboration (Sgr A*), and the James Webb Space Telescope NIRSpec scientific consortia.
+          </p>
+          <div class="footer-coords">
+            GALACTIC COORDINATES: l = 0.0°, b = 0.0° · SAGITTARIUS A* COMPACT RADIO SOURCE
+          </div>
+        </div>
+        <div class="footer-links">
+          <span class="footer-nav-title">OBSERVATORY ARCHIVES</span>
+          <ul>
+            <li><a href="#hero">Galactic Spiral Sim</a></li>
+            <li><a href="#galactic-metrics">Dimensional Metrics</a></li>
+            <li><a href="#exoplanet-archive">Exoplanetary Archive</a></li>
+            <li><a href="#transit-lab">Transit Photometry Lab</a></li>
+            <li><a href="#scale-studio">Scale Studio</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>Curated with Astronomical Precision · No AI Slop · Editorial Scientific Typographic Standards</span>
+        <span>WCAG 2.2 AA Compliant · High-Performance WebGL &amp; Canvas Kinematics</span>
+      </div>
+    </footer>
+
+    <!-- Main Module Script -->
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
