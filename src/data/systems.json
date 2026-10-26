@@ -3,22 +3,148 @@
     "id": "sol",
     "name": "Sol (Solar System)",
     "spectralType": "G2V",
-    "distanceLy": 0.0,
-    "luminositySolar": 1.0,
-    "massSolar": 1.0,
-    "radiusSolar": 1.0,
+    "distanceLy": 0,
+    "luminositySolar": 1,
+    "massSolar": 1,
+    "radiusSolar": 1,
     "ra": "00h 00m 00s",
     "dec": "+00° 00′ 00″",
-    "raDeg": 0.0,
-    "decDeg": 0.0,
+    "raDeg": 0,
+    "decDeg": 0,
     "color": "#fff3d6",
+    "summary": "Our home planetary system located in the Orion-Cygnus Arm, approximately 26,670 light-years from Sagittarius A*. Features 8 major planets, the asteroid belt, and the Kuiper belt.",
     "planets": [
-      { "id": "mercury", "name": "Mercury", "semiMajorAxisAu": 0.387, "periodDays": 87.97, "radiusEarth": 0.383, "color": "#a8a59b" },
-      { "id": "venus", "name": "Venus", "semiMajorAxisAu": 0.723, "periodDays": 224.7, "radiusEarth": 0.949, "color": "#d9b37c" },
-      { "id": "earth", "name": "Earth", "semiMajorAxisAu": 1.000, "periodDays": 365.25, "radiusEarth": 1.000, "color": "#4d90d6" },
-      { "id": "mars", "name": "Mars", "semiMajorAxisAu": 1.524, "periodDays": 686.98, "radiusEarth": 0.532, "color": "#cf5f3a" },
-      { "id": "jupiter", "name": "Jupiter", "semiMajorAxisAu": 5.204, "periodDays": 4332.6, "radiusEarth": 10.97, "color": "#d69f69" },
-      { "id": "saturn", "name": "Saturn", "semiMajorAxisAu": 9.582, "periodDays": 10759.2, "radiusEarth": 9.14, "color": "#e0c289", "hasRings": true }
+      {
+        "id": "mercury",
+        "name": "Mercury",
+        "hostStar": "Sol",
+        "semiMajorAxisAu": 0.387,
+        "periodDays": 87.97,
+        "radiusEarth": 0.383,
+        "massEarth": 0.055,
+        "surfaceTempK": 440,
+        "discoveryMethod": "Visual Astronomy (Antiquity)",
+        "discoveryYear": "Antiquity",
+        "habitabilityStatus": "non-habitable",
+        "habitability": "Extreme Thermal Radiation (Tidally Resonant)",
+        "summary": "Innermost planet of the Solar System. Cratered silicate crust with an immense iron core and virtually no atmosphere, producing wild swings between 100 K at night and 700 K at noon.",
+        "color": "#9ca3af"
+      },
+      {
+        "id": "venus",
+        "name": "Venus",
+        "hostStar": "Sol",
+        "semiMajorAxisAu": 0.723,
+        "periodDays": 224.7,
+        "radiusEarth": 0.949,
+        "massEarth": 0.815,
+        "surfaceTempK": 737,
+        "discoveryMethod": "Visual Astronomy (Antiquity)",
+        "discoveryYear": "Antiquity",
+        "habitabilityStatus": "non-habitable",
+        "habitability": "Runaway Super-Critical Greenhouse",
+        "summary": "Earth's toxic sister planet with a crushing 92-bar carbon dioxide atmosphere and reflective sulfuric acid cloud decks, maintaining a surface hotter than molten lead.",
+        "color": "#f59e0b"
+      },
+      {
+        "id": "earth",
+        "name": "Earth",
+        "hostStar": "Sol",
+        "semiMajorAxisAu": 1,
+        "periodDays": 365.25,
+        "radiusEarth": 1,
+        "massEarth": 1,
+        "surfaceTempK": 288,
+        "discoveryMethod": "In-Situ Terrestrial Origin",
+        "discoveryYear": "Native",
+        "habitabilityStatus": "habitable",
+        "habitability": "Confirmed Active Biosphere (Habitable Zone)",
+        "summary": "The pale blue dot. The only verified planet known to harbor life, sustained by liquid water oceans, an active geodynamo magnetosphere, and nitrogen-oxygen atmospheric equilibrium.",
+        "color": "#3b82f6",
+        "atmoColor": "#60a5fa"
+      },
+      {
+        "id": "mars",
+        "name": "Mars",
+        "hostStar": "Sol",
+        "semiMajorAxisAu": 1.524,
+        "periodDays": 686.98,
+        "radiusEarth": 0.532,
+        "massEarth": 0.107,
+        "surfaceTempK": 210,
+        "discoveryMethod": "Visual Astronomy (Antiquity)",
+        "discoveryYear": "Antiquity",
+        "habitabilityStatus": "non-habitable",
+        "habitability": "Outer Habitable Zone (Frigid Sub-surface)",
+        "summary": "The Red Planet. Iron-oxide desert surface hosting Olympus Mons and Valles Marineris, with ancient river valleys testifying to a warmer, wetter early epoch.",
+        "color": "#ea580c"
+      },
+      {
+        "id": "jupiter",
+        "name": "Jupiter",
+        "hostStar": "Sol",
+        "semiMajorAxisAu": 5.204,
+        "periodDays": 4332.59,
+        "radiusEarth": 11.209,
+        "massEarth": 317.83,
+        "surfaceTempK": 165,
+        "discoveryMethod": "Telescopic (Galileo 1610)",
+        "discoveryYear": "Antiquity / 1610",
+        "habitabilityStatus": "non-habitable",
+        "habitability": "High-Pressure Gas Giant",
+        "summary": "The monarch of the Solar System. Containing more than twice the mass of all other planets combined, marked by chaotic atmospheric bands and the Great Red Spot anticyclone.",
+        "color": "#d97706"
+      },
+      {
+        "id": "saturn",
+        "name": "Saturn",
+        "hostStar": "Sol",
+        "semiMajorAxisAu": 9.582,
+        "periodDays": 10759.22,
+        "radiusEarth": 9.449,
+        "massEarth": 95.16,
+        "surfaceTempK": 134,
+        "discoveryMethod": "Telescopic (Galileo 1610)",
+        "discoveryYear": "Antiquity / 1610",
+        "habitabilityStatus": "non-habitable",
+        "habitability": "Gas Giant with Cryogenic Moons",
+        "summary": "The jewel of the solar system, surrounded by an extensive, high-albedo ring system composed predominantly of water-ice particles with trace silicates.",
+        "color": "#eab308",
+        "hasRings": true
+      },
+      {
+        "id": "uranus",
+        "name": "Uranus",
+        "hostStar": "Sol",
+        "semiMajorAxisAu": 19.201,
+        "periodDays": 30685.4,
+        "radiusEarth": 4.007,
+        "massEarth": 14.54,
+        "surfaceTempK": 76,
+        "discoveryMethod": "William Herschel (1781)",
+        "discoveryYear": "1781",
+        "habitabilityStatus": "non-habitable",
+        "habitability": "Cryogenic Ice Giant",
+        "summary": "An ice giant with a dramatic 97.8° axial tilt, rotating essentially on its side. Atmosphere rich in hydrogen, helium, and methane clouds lending an azure cyan hue.",
+        "color": "#38bdf8",
+        "hasRings": true
+      },
+      {
+        "id": "neptune",
+        "name": "Neptune",
+        "hostStar": "Sol",
+        "semiMajorAxisAu": 30.047,
+        "periodDays": 60189,
+        "radiusEarth": 3.883,
+        "massEarth": 17.15,
+        "surfaceTempK": 72,
+        "discoveryMethod": "Mathematical Prediction (Le Verrier / Galle 1846)",
+        "discoveryYear": "1846",
+        "habitabilityStatus": "non-habitable",
+        "habitability": "Deep Dynamic Ice Giant",
+        "summary": "Outermost major planet, discovered through gravitational perturbations on Uranus. Features the fastest supersonic wind speeds recorded in the Solar System, exceeding 2,100 km/h.",
+        "color": "#2563eb"
+      }
     ]
   },
   {
@@ -33,8 +159,22 @@
     "decDeg": -62.67947,
     "color": "#ff6847",
     "planets": [
-      { "id": "proxima-d", "name": "Proxima d", "semiMajorAxisAu": 0.0289, "periodDays": 5.122, "radiusEarth": 0.81, "color": "#8f6759" },
-      { "id": "proxima-b", "name": "Proxima b", "semiMajorAxisAu": 0.0485, "periodDays": 11.186, "radiusEarth": 1.03, "color": "#4a7a8c" }
+      {
+        "id": "proxima-d",
+        "name": "Proxima d",
+        "semiMajorAxisAu": 0.0289,
+        "periodDays": 5.122,
+        "radiusEarth": 0.81,
+        "color": "#8f6759"
+      },
+      {
+        "id": "proxima-b",
+        "name": "Proxima b",
+        "semiMajorAxisAu": 0.0485,
+        "periodDays": 11.186,
+        "radiusEarth": 1.03,
+        "color": "#4a7a8c"
+      }
     ]
   },
   {
@@ -49,28 +189,84 @@
     "decDeg": -5.0413,
     "color": "#ff4c30",
     "planets": [
-      { "id": "trappist-1b", "name": "TRAPPIST-1 b", "semiMajorAxisAu": 0.0115, "periodDays": 1.511, "radiusEarth": 1.116, "color": "#7a5c4e" },
-      { "id": "trappist-1c", "name": "TRAPPIST-1 c", "semiMajorAxisAu": 0.0158, "periodDays": 2.422, "radiusEarth": 1.097, "color": "#a88065" },
-      { "id": "trappist-1d", "name": "TRAPPIST-1 d", "semiMajorAxisAu": 0.0223, "periodDays": 4.050, "radiusEarth": 0.788, "color": "#7a7e85" },
-      { "id": "trappist-1e", "name": "TRAPPIST-1 e", "semiMajorAxisAu": 0.0293, "periodDays": 6.100, "radiusEarth": 0.920, "color": "#3f7796" },
-      { "id": "trappist-1f", "name": "TRAPPIST-1 f", "semiMajorAxisAu": 0.0385, "periodDays": 9.207, "radiusEarth": 1.045, "color": "#658ca3" },
-      { "id": "trappist-1g", "name": "TRAPPIST-1 g", "semiMajorAxisAu": 0.0469, "periodDays": 12.353, "radiusEarth": 1.129, "color": "#8ba3b5" },
-      { "id": "trappist-1h", "name": "TRAPPIST-1 h", "semiMajorAxisAu": 0.0619, "periodDays": 18.766, "radiusEarth": 0.775, "color": "#9eb3c2" }
+      {
+        "id": "trappist-1b",
+        "name": "TRAPPIST-1 b",
+        "semiMajorAxisAu": 0.0115,
+        "periodDays": 1.511,
+        "radiusEarth": 1.116,
+        "color": "#7a5c4e"
+      },
+      {
+        "id": "trappist-1c",
+        "name": "TRAPPIST-1 c",
+        "semiMajorAxisAu": 0.0158,
+        "periodDays": 2.422,
+        "radiusEarth": 1.097,
+        "color": "#a88065"
+      },
+      {
+        "id": "trappist-1d",
+        "name": "TRAPPIST-1 d",
+        "semiMajorAxisAu": 0.0223,
+        "periodDays": 4.05,
+        "radiusEarth": 0.788,
+        "color": "#7a7e85"
+      },
+      {
+        "id": "trappist-1e",
+        "name": "TRAPPIST-1 e",
+        "semiMajorAxisAu": 0.0293,
+        "periodDays": 6.1,
+        "radiusEarth": 0.92,
+        "color": "#3f7796"
+      },
+      {
+        "id": "trappist-1f",
+        "name": "TRAPPIST-1 f",
+        "semiMajorAxisAu": 0.0385,
+        "periodDays": 9.207,
+        "radiusEarth": 1.045,
+        "color": "#658ca3"
+      },
+      {
+        "id": "trappist-1g",
+        "name": "TRAPPIST-1 g",
+        "semiMajorAxisAu": 0.0469,
+        "periodDays": 12.353,
+        "radiusEarth": 1.129,
+        "color": "#8ba3b5"
+      },
+      {
+        "id": "trappist-1h",
+        "name": "TRAPPIST-1 h",
+        "semiMajorAxisAu": 0.0619,
+        "periodDays": 18.766,
+        "radiusEarth": 0.775,
+        "color": "#9eb3c2"
+      }
     ]
   },
   {
     "id": "kepler-452",
     "name": "Kepler-452",
     "spectralType": "G2V",
-    "distanceLy": 1799.0,
-    "luminositySolar": 1.20,
+    "distanceLy": 1799,
+    "luminositySolar": 1.2,
     "massSolar": 1.037,
     "radiusSolar": 1.11,
     "raDeg": 296.0037,
     "decDeg": 44.2776,
     "color": "#fff2cc",
     "planets": [
-      { "id": "kepler-452b", "name": "Kepler-452b", "semiMajorAxisAu": 1.046, "periodDays": 384.84, "radiusEarth": 1.63, "color": "#3f738f" }
+      {
+        "id": "kepler-452b",
+        "name": "Kepler-452b",
+        "semiMajorAxisAu": 1.046,
+        "periodDays": 384.84,
+        "radiusEarth": 1.63,
+        "color": "#3f738f"
+      }
     ]
   },
   {
@@ -85,8 +281,22 @@
     "decDeg": 28.3308,
     "color": "#ffdf99",
     "planets": [
-      { "id": "55-cancri-e", "name": "55 Cancri e", "semiMajorAxisAu": 0.0154, "periodDays": 0.737, "radiusEarth": 1.875, "color": "#d94b29" },
-      { "id": "55-cancri-b", "name": "55 Cancri b", "semiMajorAxisAu": 0.1134, "periodDays": 14.65, "radiusEarth": 12.0, "color": "#b87d4b" }
+      {
+        "id": "55-cancri-e",
+        "name": "55 Cancri e",
+        "semiMajorAxisAu": 0.0154,
+        "periodDays": 0.737,
+        "radiusEarth": 1.875,
+        "color": "#d94b29"
+      },
+      {
+        "id": "55-cancri-b",
+        "name": "55 Cancri b",
+        "semiMajorAxisAu": 0.1134,
+        "periodDays": 14.65,
+        "radiusEarth": 12,
+        "color": "#b87d4b"
+      }
     ]
   },
   {
@@ -101,22 +311,36 @@
     "decDeg": 22.7109,
     "color": "#ffb86c",
     "planets": [
-      { "id": "hd-189733-b", "name": "HD 189733 b", "semiMajorAxisAu": 0.0313, "periodDays": 2.219, "radiusEarth": 12.7, "color": "#174880" }
+      {
+        "id": "hd-189733-b",
+        "name": "HD 189733 b",
+        "semiMajorAxisAu": 0.0313,
+        "periodDays": 2.219,
+        "radiusEarth": 12.7,
+        "color": "#174880"
+      }
     ]
   },
   {
     "id": "wasp-12",
     "name": "WASP-12",
     "spectralType": "F9V",
-    "distanceLy": 1410.0,
-    "luminositySolar": 2.10,
+    "distanceLy": 1410,
+    "luminositySolar": 2.1,
     "massSolar": 1.434,
     "radiusSolar": 1.657,
     "raDeg": 97.6367,
     "decDeg": 29.6722,
     "color": "#f8f9fa",
     "planets": [
-      { "id": "wasp-12b", "name": "WASP-12b", "semiMajorAxisAu": 0.0229, "periodDays": 1.091, "radiusEarth": 21.3, "color": "#c43d2b" }
+      {
+        "id": "wasp-12b",
+        "name": "WASP-12b",
+        "semiMajorAxisAu": 0.0229,
+        "periodDays": 1.091,
+        "radiusEarth": 21.3,
+        "color": "#c43d2b"
+      }
     ]
   },
   {
@@ -131,7 +355,14 @@
     "decDeg": 7.5884,
     "color": "#ff8754",
     "planets": [
-      { "id": "k2-18b", "name": "K2-18b", "semiMajorAxisAu": 0.1591, "periodDays": 32.94, "radiusEarth": 2.61, "color": "#336b75" }
+      {
+        "id": "k2-18b",
+        "name": "K2-18b",
+        "semiMajorAxisAu": 0.1591,
+        "periodDays": 32.94,
+        "radiusEarth": 2.61,
+        "color": "#336b75"
+      }
     ]
   },
   {
@@ -146,7 +377,14 @@
     "decDeg": 4.6933,
     "color": "#ff5c3b",
     "planets": [
-      { "id": "barnards-star-b", "name": "Barnard's Star b", "semiMajorAxisAu": 0.0229, "periodDays": 3.153, "radiusEarth": 0.74, "color": "#8c6053" }
+      {
+        "id": "barnards-star-b",
+        "name": "Barnard's Star b",
+        "semiMajorAxisAu": 0.0229,
+        "periodDays": 3.153,
+        "radiusEarth": 0.74,
+        "color": "#8c6053"
+      }
     ]
   }
 ]

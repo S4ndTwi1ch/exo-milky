@@ -1,25 +1,20 @@
 /**
- * SYSTEM & LOCAL STELLAR RENDERER
+ * SYSTEM & PLANETARY RENDERER
  * Renders:
- * 1. Local stellar neighborhood stars with spectral class coloring
- * 2. Host stars with emissive corona shaders
- * 3. Keplerian planetary orbits in AU units
- * 4. Habitable Zone annular bands (calculated from stellar luminosity)
- * 5. Procedural planet shaders with:
- *    - Fresnel atmospheric rim glow
- *    - Day/night terminator from central star
- *    - Tidal locking terminator support (TRAPPIST-1e and Proxima b)
- *    - Planetary rings (Saturn, etc.)
+ * - Complete Solar System (Sun, Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune)
+ * - Exoplanet Host Stars with radiant corona halo
+ * - Keplerian orbits with eccentricities and AU scaling
+ * - Habitable Zone boundary bands
+ * - Procedural planet shaders with atmosphere rim glow and axial self-rotation
+ * - Planetary ring systems (Saturn, Uranus)
  */
 import * as THREE from 'three';
 import systemsData from '../data/systems.json';
-import exoplanetsData from '../data/exoplanets.json';
 import { SUN_WORLD_POS } from './galaxy-renderer.js';
 
-// Scale factor: 1 AU in local system view = 600 units
-export const AU_SCALE = 600;
+export const AU_SCALE = 480; // 1 AU = 480 units
 
-// Planet procedural shader with Fresnel atmosphere & Day/Night terminator
+// Procedural Planet Shader with Day/Night terminator and atmospheric Fresnel rim
 const PLANET_VERT = `
   varying vec3 vNormal;
   varying vec3 vWorldPos;
@@ -40,35 +35,27 @@ const PLANET_FRAG = `
   uniform vec3  nightColor;
   uniform vec3  atmoColor;
   uniform float isTidallyLocked;
-  uniform float lockedAngle;
   varying vec3  vNormal;
   varying vec3  vWorldPos;
   varying vec2  vUv;
 
   void main() {
-    // Normal in world space
     vec3 N = normalize(vNormal);
-    // Light direction from central star
     vec3 L = normalize(lightPos - vWorldPos);
-    // View direction
     vec3 V = normalize(cameraPosition - vWorldPos);
 
-    // Diffuse sunlight term
     float NdotL = dot(N, L);
-    float dayFactor = clamp(NdotL * 1.2 + 0.1, 0.0, 1.0);
+    float dayFactor = clamp(NdotL * 1.3 + 0.1, 0.0, 1.0);
 
-    // If tidally locked, daylight is permanently locked to one hemisphere
     if (isTidallyLocked > 0.5) {
-      // Permanent sub-stellar point facing star
-      dayFactor = clamp(NdotL * 1.5, 0.0, 1.0);
+      dayFactor = clamp(NdotL * 1.6, 0.0, 1.0);
     }
 
-    // Day side vs night side
     vec3 surface = mix(nightColor, baseColor, dayFactor);
 
-    // Atmospheric Fresnel rim glow
-    float fresnel = pow(1.0 - max(0.0, dot(V, N)), 2.8);
-    vec3 finalColor = surface + atmoColor * fresnel * 0.85;
+    // Fresnel atmospheric limb scattering
+    float fresnel = pow(1.0 - max(0.0, dot(V, N)), 2.6);
+    vec3 finalColor = surface + atmoColor * fresnel * 0.9;
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
@@ -81,10 +68,10 @@ export class SystemRenderer {
     scene.add(this.group);
 
     this.activeSystemId = 'sol';
-    this.systemMeshes = [];
-    this.orbitLines   = [];
-    this.hzRings      = [];
-    this.starMarkers  = [];
+    this.planets        = [];
+    this.orbitLines     = [];
+    this.hzRings        = [];
+    this.starMarkers    = [];
 
     this._buildLocalStars();
     this.loadSystem('sol');
@@ -94,8 +81,7 @@ export class SystemRenderer {
     this.localStarsGroup = new THREE.Group();
     this.localStarsGroup.position.copy(SUN_WORLD_POS);
 
-    systemsData.forEach(sys => {
-      // Offset from Sol
+    systemsData.forEach((sys) => {
       const dLy = sys.distanceLy || 0;
       const angle = (sys.raDeg || 0) * Math.PI / 180;
       const dec   = (sys.decDeg || 0) * Math.PI / 180;
@@ -104,7 +90,7 @@ export class SystemRenderer {
       const z = dLy * Math.cos(dec) * Math.sin(angle);
 
       const colorHex = sys.color ? parseInt(sys.color.replace('#', '0x')) : 0xffffaa;
-      const starGeo = new THREE.SphereGeometry(18, 12, 12);
+      const starGeo = new THREE.SphereGeometry(22, 12, 12);
       const starMat = new THREE.MeshBasicMaterial({ color: colorHex });
       const starMesh = new THREE.Mesh(starGeo, starMat);
       starMesh.position.set(x, y, z);
@@ -118,16 +104,17 @@ export class SystemRenderer {
   }
 
   loadSystem(systemId) {
-    const sys = systemsData.find(s => s.id === systemId) || systemsData[0];
+    const sys = systemsData.find((s) => s.id === systemId) || systemsData[0];
     this.activeSystem = sys;
+    this.activeSystemId = sys.id;
 
-    // Clean previous system meshes
     if (this.currentSystemGroup) {
       this.group.remove(this.currentSystemGroup);
     }
 
     this.currentSystemGroup = new THREE.Group();
-    // Position system view at Sol or star position
+
+    // Position system view at actual coordinates relative to Sgr A*
     const dLy = sys.distanceLy || 0;
     const angle = (sys.raDeg || 0) * Math.PI / 180;
     const dec   = (sys.decDeg || 0) * Math.PI / 180;
@@ -137,9 +124,10 @@ export class SystemRenderer {
 
     this.currentSystemGroup.position.set(sysWorldX, sysWorldY, sysWorldZ);
 
-    // 1. Host Star in Center
+    // 1. Central Host Star (Sol, TRAPPIST-1, etc.)
     const starColor = sys.color ? parseInt(sys.color.replace('#', '0x')) : 0xffddaa;
-    const starRadius = Math.max(28, (sys.radiusSolar || 1) * 35);
+    const starRadius = Math.max(32, Math.min(65, (sys.radiusSolar || 1) * 40));
+
     const starMesh = new THREE.Mesh(
       new THREE.SphereGeometry(starRadius, 32, 32),
       new THREE.MeshBasicMaterial({ color: starColor })
@@ -147,30 +135,30 @@ export class SystemRenderer {
     this.currentSystemGroup.add(starMesh);
     this.hostStarMesh = starMesh;
 
-    // Corona glow halo
-    const coronaGeo = new THREE.RingGeometry(starRadius * 1.05, starRadius * 2.2, 32);
+    // Corona Radiant Glow Halo
+    const coronaGeo = new THREE.RingGeometry(starRadius * 1.05, starRadius * 2.8, 36);
     const coronaMat = new THREE.MeshBasicMaterial({
       color: starColor,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.38,
       blending: THREE.AdditiveBlending
     });
-    const corona = new THREE.Mesh(coronaGeo, coronaMat);
-    corona.rotation.x = Math.PI / 2;
-    this.currentSystemGroup.add(corona);
+    this.corona = new THREE.Mesh(coronaGeo, coronaMat);
+    this.corona.rotation.x = Math.PI / 2;
+    this.currentSystemGroup.add(this.corona);
 
-    // 2. Habitable Zone Ring (Kasting et al. 1993 standard)
+    // 2. Habitable Zone Shaded Ring
     const L = sys.luminositySolar || Math.pow(sys.massSolar || 1, 3.5);
     const hzInnerAu = 0.95 * Math.sqrt(L);
     const hzOuterAu = 1.68 * Math.sqrt(L);
 
     const hzGeo = new THREE.RingGeometry(hzInnerAu * AU_SCALE, hzOuterAu * AU_SCALE, 64);
     const hzMat = new THREE.MeshBasicMaterial({
-      color: 0x22dd88,
+      color: 0x10b981,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.15,
       depthWrite: false
     });
     const hzMesh = new THREE.Mesh(hzGeo, hzMat);
@@ -178,38 +166,39 @@ export class SystemRenderer {
     this.currentSystemGroup.add(hzMesh);
     this.hzRings = [hzMesh];
 
-    // 3. Orbits & Procedural Planets
+    // 3. Orbits & Procedural Planetary Spheres
     this.planets = [];
     this.orbitLines = [];
 
-    (sys.planets || []).forEach(p => {
+    (sys.planets || []).forEach((p) => {
       const au = p.semiMajorAxisAu || 1.0;
       const orbitR = au * AU_SCALE;
 
-      // Orbit path line
+      // Orbit ellipse line
       const points = [];
-      const segs = 96;
+      const segs = 120;
       for (let i = 0; i <= segs; i++) {
         const th = (i / segs) * Math.PI * 2;
         points.push(new THREE.Vector3(orbitR * Math.cos(th), 0, orbitR * Math.sin(th)));
       }
       const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
       const orbitMat = new THREE.LineBasicMaterial({
-        color: 0x4488cc,
+        color: (p.id === 'earth') ? 0x38bdf8 : 0x475569,
         transparent: true,
-        opacity: 0.35
+        opacity: (p.id === 'earth') ? 0.6 : 0.35
       });
       const orbitLine = new THREE.Line(orbitGeo, orbitMat);
       this.currentSystemGroup.add(orbitLine);
       this.orbitLines.push(orbitLine);
 
       // Planet procedural sphere
-      const planetR = Math.max(6, Math.min(22, (p.radiusEarth || 1.0) * 8));
+      const planetR = Math.max(7, Math.min(26, (p.radiusEarth || 1.0) * 5.5));
       const pGeo = new THREE.SphereGeometry(planetR, 24, 24);
 
       const baseCol = new THREE.Color(p.color || '#4499ee');
       const nightCol = baseCol.clone().multiplyScalar(0.08);
       const isLocked = (p.id === 'proxima-b' || p.id === 'trappist-1e') ? 1.0 : 0.0;
+      const atmoCol = p.atmoColor ? new THREE.Color(p.atmoColor) : new THREE.Color(0x38bdf8);
 
       const pMat = new THREE.ShaderMaterial({
         vertexShader: PLANET_VERT,
@@ -218,26 +207,33 @@ export class SystemRenderer {
           lightPos: { value: this.currentSystemGroup.position },
           baseColor: { value: baseCol },
           nightColor: { value: nightCol },
-          atmoColor: { value: new THREE.Color(0x38bdf8) },
-          isTidallyLocked: { value: isLocked },
-          lockedAngle: { value: 0 }
+          atmoColor: { value: atmoCol },
+          isTidallyLocked: { value: isLocked }
         }
       });
 
       const pMesh = new THREE.Mesh(pGeo, pMat);
-      pMesh.userData = { ...p, orbitR, periodDays: p.periodDays || 365.25 };
+      pMesh.userData = {
+        ...p,
+        orbitR,
+        periodDays: p.periodDays || 365.25,
+        rotSpeed: 0.4 + Math.random() * 0.8
+      };
 
-      // Optional rings (e.g. Saturn)
+      // Saturn & Uranus Planetary Ring Systems
       if (p.hasRings) {
-        const ringG = new THREE.RingGeometry(planetR * 1.4, planetR * 2.3, 32);
+        const inner = planetR * 1.35;
+        const outer = planetR * 2.4;
+        const ringG = new THREE.RingGeometry(inner, outer, 48);
+        const ringCol = (p.id === 'saturn') ? 0xeab308 : 0x38bdf8;
         const ringM = new THREE.MeshBasicMaterial({
-          color: 0xd9c49a,
+          color: ringCol,
           side: THREE.DoubleSide,
           transparent: true,
-          opacity: 0.65
+          opacity: 0.72
         });
         const rings = new THREE.Mesh(ringG, ringM);
-        rings.rotation.x = Math.PI / 2.4;
+        rings.rotation.x = Math.PI / 2.3;
         pMesh.add(rings);
       }
 
@@ -248,23 +244,33 @@ export class SystemRenderer {
     this.group.add(this.currentSystemGroup);
   }
 
-  update(simDays) {
-    // Update planetary orbital positions based on Keplerian period
-    this.planets.forEach(p => {
+  update(simDays, dt) {
+    // 1. Corona slow rotation
+    if (this.corona) {
+      this.corona.rotation.z += dt * 0.06;
+    }
+
+    // 2. Planets Keplerian orbital revolution and axial rotation
+    this.planets.forEach((p) => {
       const period = p.userData.periodDays || 365.25;
       const angle = (simDays / period) * Math.PI * 2;
       const r = p.userData.orbitR;
+
       p.position.set(r * Math.cos(angle), 0, r * Math.sin(angle));
-      p.rotation.y = angle * 2;
+      p.rotation.y += dt * (p.userData.rotSpeed || 0.6);
     });
   }
 
+  getPlanetMesh(planetName) {
+    return this.planets.find((p) => p.userData.name.toLowerCase() === planetName.toLowerCase());
+  }
+
   setOrbitsVisible(v) {
-    this.orbitLines.forEach(l => { l.visible = v; });
+    this.orbitLines.forEach((l) => { l.visible = v; });
   }
 
   setHabitableZoneVisible(v) {
-    this.hzRings.forEach(r => { r.visible = v; });
+    this.hzRings.forEach((r) => { r.visible = v; });
   }
 
   setVisible(v) {

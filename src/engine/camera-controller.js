@@ -1,8 +1,10 @@
 /**
- * GODS-EYE CAMERA CONTROLLER
- * Logarithmic zoom (Galaxy -> Local Neighborhood -> System view)
- * Floating-origin offset, keyboard navigation (WASD, Arrows, +/-, Esc),
- * interruptible eased fly-to transitions.
+ * GODS-EYE CAMERA CONTROLLER - HIGH PERFORMANCE DAMPED KINEMATICS
+ * Features:
+ * - Damped logarithmic zoom eliminating stepping/choppiness
+ * - Spherical orbital damping for silky-smooth rotation and panning
+ * - Arc-curved, eased fly-to interpolation with Perlin quintic smoothing
+ * - Keyboard navigation (WASD, Arrows, +/-, Esc)
  */
 import * as THREE from 'three';
 
@@ -19,130 +21,143 @@ export class CameraController {
     this.scaleLevel = SCALE.GALAXY;
 
     // Logarithmic zoom bounds
-    this.logZoom = 0;      // 0 = full galaxy overview
-    this.minLog  = -0.5;   // ~160,000 ly
-    this.maxLog  = 5.4;    // ~10 AU
+    this.logZoom       = 0;      // Current smoothly interpolated zoom
+    this.targetLogZoom = 0;      // Goal zoom from user scroll
+    this.minLog        = -0.4;   // Galaxy wide overview (~120,000 ly)
+    this.maxLog        = 5.2;    // High-resolution system close-up
 
-    // Orbit coordinates
-    this.azimuth  = 0.4;
-    this.altitude = Math.PI / 3.2; // ~56 deg above galactic plane
-    this.radius   = 95000;         // ly
+    // Spherical orbit angles
+    this.azimuth       = 0.45;
+    this.targetAzimuth = 0.45;
+    this.altitude       = Math.PI / 3.4; // ~53 deg inclination
+    this.targetAltitude = Math.PI / 3.4;
 
-    // Target origin
-    this.target = new THREE.Vector3(0, 0, 0);
+    // Camera target (lookAt point)
+    this.target     = new THREE.Vector3(0, 0, 0);
+    this.targetGoal = new THREE.Vector3(0, 0, 0);
 
-    // Fly-to animation state
-    this.flyActive   = false;
-    this.flyT        = 1;
-    this.flyFrom     = new THREE.Vector3();
-    this.flyToTarget = new THREE.Vector3();
-    this.flyStartZoom= 0;
-    this.flyEndZoom  = 0;
-    this.flyDuration = 2.0; // seconds
+    // Current camera distance
+    this.radius = 95000;
+
+    // Fly-to state
+    this.flyActive     = false;
+    this.flyT          = 1.0;
+    this.flyFrom       = new THREE.Vector3();
+    this.flyToTarget   = new THREE.Vector3();
+    this.flyStartZoom  = 0;
+    this.flyEndZoom    = 0;
+    this.flyDuration   = 2.2; // seconds
 
     this._initPointer();
     this._initWheel();
     this._initKeyboard();
-    this._updateCamera();
+    this._updateCameraPositionsInstant();
   }
 
   _initPointer() {
-    let down = false, lastX = 0, lastY = 0;
-    let rightDown = false;
+    let isDown = false;
+    let isRight = false;
+    let lastX = 0, lastY = 0;
 
-    this.dom.addEventListener('pointerdown', e => {
-      // Interrupt fly-to on manual user drag
-      if (this.flyActive) this.flyActive = false;
+    this.dom.addEventListener('pointerdown', (e) => {
+      // User interaction interrupts ongoing fly-to
+      if (this.flyActive) {
+        this.flyActive = false;
+        this.targetGoal.copy(this.target);
+        this.targetLogZoom = this.logZoom;
+      }
 
       if (e.button === 2 || e.shiftKey) {
-        rightDown = true;
+        isRight = true;
       } else {
-        down = true;
+        isDown = true;
       }
       lastX = e.clientX;
       lastY = e.clientY;
       e.preventDefault();
     });
 
-    this.dom.addEventListener('pointermove', e => {
-      if (!down && !rightDown) return;
+    this.dom.addEventListener('pointermove', (e) => {
+      if (!isDown && !isRight) return;
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
 
-      if (rightDown) {
-        // Pan target in screen plane
-        const panSpeed = this.radius * 0.0012;
+      if (isRight) {
+        // Pan target along camera right/up vectors
+        const panSpeed = this.radius * 0.0009;
         const forward = new THREE.Vector3().subVectors(this.target, this.camera.position).normalize();
         const right = new THREE.Vector3().crossVectors(forward, this.camera.up).normalize();
-        this.target.addScaledVector(right, -dx * panSpeed);
-        this.target.y += dy * panSpeed;
+
+        this.targetGoal.addScaledVector(right, -dx * panSpeed);
+        this.targetGoal.y += dy * panSpeed;
       } else {
-        // Orbit azimuth and altitude
-        this.azimuth  -= dx * 0.0035;
-        this.altitude  = Math.max(0.04, Math.min(Math.PI / 2 - 0.04, this.altitude - dy * 0.0035));
+        // Orbit azimuth and altitude with damping target
+        this.targetAzimuth  -= dx * 0.0032;
+        this.targetAltitude  = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, this.targetAltitude - dy * 0.0032));
       }
 
       lastX = e.clientX;
       lastY = e.clientY;
-      this._updateCamera();
-      this._emitCameraMove();
     });
 
     window.addEventListener('pointerup', () => {
-      down = false;
-      rightDown = false;
+      isDown = false;
+      isRight = false;
     });
 
-    this.dom.addEventListener('contextmenu', e => e.preventDefault());
+    this.dom.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
   _initWheel() {
-    this.dom.addEventListener('wheel', e => {
+    this.dom.addEventListener('wheel', (e) => {
       e.preventDefault();
-      if (this.flyActive) this.flyActive = false;
+      if (this.flyActive) {
+        this.flyActive = false;
+        this.targetGoal.copy(this.target);
+      }
 
-      const delta = e.deltaY > 0 ? -0.15 : 0.15;
-      this.setLogZoom(this.logZoom + delta);
+      // Smooth proportional delta
+      const delta = (e.deltaY < 0 ? 0.20 : -0.20);
+      this.targetLogZoom = Math.max(this.minLog, Math.min(this.maxLog, this.targetLogZoom + delta));
     }, { passive: false });
   }
 
   _initKeyboard() {
-    window.addEventListener('keydown', e => {
-      // Ignore if focus is in an input field
+    window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
+      const step = 0.12;
       let handled = false;
-      const step = 0.08;
 
       switch (e.key) {
         case 'w':
         case 'ArrowUp':
-          this.altitude = Math.min(Math.PI / 2 - 0.04, this.altitude + step * 0.4);
+          this.targetAltitude = Math.min(Math.PI / 2 - 0.05, this.targetAltitude + step * 0.5);
           handled = true;
           break;
         case 's':
         case 'ArrowDown':
-          this.altitude = Math.max(0.04, this.altitude - step * 0.4);
+          this.targetAltitude = Math.max(0.05, this.targetAltitude - step * 0.5);
           handled = true;
           break;
         case 'a':
         case 'ArrowLeft':
-          this.azimuth += step * 0.6;
+          this.targetAzimuth += step * 0.8;
           handled = true;
           break;
         case 'd':
         case 'ArrowRight':
-          this.azimuth -= step * 0.6;
+          this.targetAzimuth -= step * 0.8;
           handled = true;
           break;
         case '+':
         case '=':
-          this.setLogZoom(this.logZoom + 0.25);
+          this.targetLogZoom = Math.min(this.maxLog, this.targetLogZoom + 0.35);
           handled = true;
           break;
         case '-':
         case '_':
-          this.setLogZoom(this.logZoom - 0.25);
+          this.targetLogZoom = Math.max(this.minLog, this.targetLogZoom - 0.35);
           handled = true;
           break;
         case 'Escape':
@@ -151,34 +166,39 @@ export class CameraController {
           break;
       }
 
-      if (handled) {
-        this._updateCamera();
-        this._emitCameraMove();
-      }
+      if (handled) e.preventDefault();
     });
-  }
-
-  setLogZoom(val) {
-    this.logZoom = Math.max(this.minLog, Math.min(this.maxLog, val));
-    // Multiplicative logarithmic radius
-    this.radius = 95000 * Math.pow(10, -this.logZoom * 0.82);
-    this._updateScaleLevel();
-    this._updateCamera();
-    this._emitCameraMove();
   }
 
   stepBackScale() {
     if (this.scaleLevel === SCALE.SYSTEM) {
-      this.flyTo(this.target, 2.2); // back to local
+      this.flyTo(this.targetGoal, 2.2); // back to local
     } else if (this.scaleLevel === SCALE.LOCAL) {
       this.flyTo(new THREE.Vector3(0, 0, 0), 0.2); // back to galaxy
+    }
+  }
+
+  _calcRadius(zoom) {
+    // Piecewise smooth radius mapping ensuring optimal system and galaxy framing
+    if (zoom < 1.4) {
+      // Galaxy scale: 95,000 ly down to 12,000 ly
+      const t = zoom / 1.4;
+      return 95000 * Math.pow(0.126, t);
+    } else if (zoom < 3.2) {
+      // Local stellar scale: 12,000 ly down to 80 ly
+      const t = (zoom - 1.4) / 1.8;
+      return 12000 * Math.pow(0.0066, t);
+    } else {
+      // System view (AU): 5,500 down to 380 units
+      const t = (zoom - 3.2) / (this.maxLog - 3.2);
+      return 5500 * Math.pow(0.069, t);
     }
   }
 
   _updateScaleLevel() {
     const prev = this.scaleLevel;
     if (this.logZoom < 1.4)       this.scaleLevel = SCALE.GALAXY;
-    else if (this.logZoom < 3.6)  this.scaleLevel = SCALE.LOCAL;
+    else if (this.logZoom < 3.2)  this.scaleLevel = SCALE.LOCAL;
     else                          this.scaleLevel = SCALE.SYSTEM;
 
     if (this.scaleLevel !== prev) {
@@ -188,32 +208,24 @@ export class CameraController {
     }
   }
 
-  _updateCamera() {
-    const r = this.radius;
+  _updateCameraPositionsInstant() {
+    this.radius = this._calcRadius(this.logZoom);
     this.camera.position.set(
-      this.target.x + r * Math.cos(this.altitude) * Math.sin(this.azimuth),
-      this.target.y + r * Math.sin(this.altitude),
-      this.target.z + r * Math.cos(this.altitude) * Math.cos(this.azimuth)
+      this.target.x + this.radius * Math.cos(this.altitude) * Math.sin(this.azimuth),
+      this.target.y + this.radius * Math.sin(this.altitude),
+      this.target.z + this.radius * Math.cos(this.altitude) * Math.cos(this.azimuth)
     );
     this.camera.lookAt(this.target);
   }
 
-  _emitCameraMove() {
-    this.dom.dispatchEvent(new CustomEvent('cameramove', {
-      detail: {
-        target: this.target,
-        radius: this.radius,
-        logZoom: this.logZoom,
-        cameraPos: this.camera.position
-      }
-    }));
-  }
-
-  flyTo(worldPos, targetLogZoom = 3.8, reducedMotion = false) {
+  flyTo(worldPos, targetLogZoom = 4.0, reducedMotion = false) {
     if (reducedMotion) {
       this.target.copy(worldPos);
-      this.setLogZoom(targetLogZoom);
-      this._updateCamera();
+      this.targetGoal.copy(worldPos);
+      this.logZoom = targetLogZoom;
+      this.targetLogZoom = targetLogZoom;
+      this._updateScaleLevel();
+      this._updateCameraPositionsInstant();
       this._emitCameraMove();
       return;
     }
@@ -225,27 +237,58 @@ export class CameraController {
     this.flyActive    = true;
     this.flyT         = 0;
 
-    // Duration scaled by distance (1.2s to 3.0s)
     const dist = this.flyFrom.distanceTo(this.flyToTarget);
-    this.flyDuration = Math.max(1.2, Math.min(3.0, 1.2 + Math.log10(dist + 1) * 0.35));
+    this.flyDuration = Math.max(1.4, Math.min(2.8, 1.2 + Math.log10(dist + 1) * 0.3));
   }
 
-  update(dtSeconds) {
+  update(dt) {
+    const frameDt = Math.min(dt, 0.1);
+
     if (this.flyActive) {
-      this.flyT = Math.min(1.0, this.flyT + dtSeconds / this.flyDuration);
-      // Smooth cubic ease-in-out
-      const t = this.flyT < 0.5
-        ? 4 * this.flyT * this.flyT * this.flyT
-        : 1 - Math.pow(-2 * this.flyT + 2, 3) / 2;
+      this.flyT = Math.min(1.0, this.flyT + frameDt / this.flyDuration);
+
+      // Smooth Quintic Curve (Perlin smoothstep): 6t^5 - 15t^4 + 10t^3
+      const t = this.flyT * this.flyT * this.flyT * (this.flyT * (this.flyT * 6 - 15) + 10);
 
       this.target.lerpVectors(this.flyFrom, this.flyToTarget, t);
-      this.setLogZoom(this.flyStartZoom + (this.flyEndZoom - this.flyStartZoom) * t);
+      this.targetGoal.copy(this.target);
+
+      // Arc pull-back during mid-flight to avoid disorientation
+      const arcD = Math.sin(this.flyT * Math.PI) * 0.45;
+      const interpolatedZoom = this.flyStartZoom + (this.flyEndZoom - this.flyStartZoom) * t - arcD;
+      this.logZoom = interpolatedZoom;
+      this.targetLogZoom = this.flyEndZoom;
 
       if (this.flyT >= 1.0) {
         this.flyActive = false;
+        this.logZoom = this.flyEndZoom;
       }
-      this._updateCamera();
-      this._emitCameraMove();
+    } else {
+      // Exponential frame-independent damping for zoom and rotation
+      const zoomDamp = 1.0 - Math.exp(-12.0 * frameDt);
+      this.logZoom += (this.targetLogZoom - this.logZoom) * zoomDamp;
+
+      const rotDamp = 1.0 - Math.exp(-14.0 * frameDt);
+      this.azimuth += (this.targetAzimuth - this.azimuth) * rotDamp;
+      this.altitude += (this.targetAltitude - this.altitude) * rotDamp;
+
+      const panDamp = 1.0 - Math.exp(-10.0 * frameDt);
+      this.target.lerp(this.targetGoal, panDamp);
     }
+
+    this._updateScaleLevel();
+    this._updateCameraPositionsInstant();
+    this._emitCameraMove();
+  }
+
+  _emitCameraMove() {
+    this.dom.dispatchEvent(new CustomEvent('cameramove', {
+      detail: {
+        target: this.target,
+        radius: this.radius,
+        logZoom: this.logZoom,
+        cameraPos: this.camera.position
+      }
+    }));
   }
 }

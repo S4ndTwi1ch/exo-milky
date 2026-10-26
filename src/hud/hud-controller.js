@@ -1,12 +1,8 @@
 /**
  * MISSION CONTROL HUD CONTROLLER
- * Full interactive telemetry HUD:
- * - Top Bar: Live UTC clock, scale level pill indicators, FPS/quality readout, scale ruler
- * - Left Panel: Searchable, categorized object tree (Galaxy Features, Star Systems, Exoplanets)
- * - Right Panel: Detailed scientific dossier with provenance attribution and deep links
- * - Bottom Bar: Real-time celestial readouts (Galactic l/b, D_Sol, XYZ), simulation time scrubber,
- *   layer toggles, 2D galactic radar minimap
- * - Mobile Drawer navigation for screens < 900px
+ * Full interactive telemetry HUD with dedicated Solar System navigation:
+ * - Categories: ALL, SOLAR, EXO, STARS, GALAXY
+ * - Full Earth, Mars, Jupiter, Saturn, etc. integration
  */
 import exoplanets from '../data/exoplanets.json';
 import systems from '../data/systems.json';
@@ -19,10 +15,8 @@ export class HudController {
     this.scene = scene;
     this.activeCategory = 'all';
 
-    // Hook selection callback
     scene.onSelect = (item) => this.openInspector(item);
 
-    // Bind DOM components
     this._initTopBar();
     this._initObjectTree();
     this._initInspector();
@@ -34,16 +28,12 @@ export class HudController {
     this._initKeyboardShortcuts();
   }
 
-  // -----------------------------------------------------------
-  // Top Bar: Clock, Scale Levels, FPS, Scale Ruler
-  // -----------------------------------------------------------
   _initTopBar() {
     const clockEl = document.getElementById('mc-utc-clock');
     const scaleBadges = document.querySelectorAll('.scale-pill');
     const fpsEl = document.getElementById('mc-fps');
     const rulerEl = document.getElementById('mc-ruler-val');
 
-    // Update UTC clock every second
     setInterval(() => {
       if (clockEl) {
         const now = new Date();
@@ -51,7 +41,6 @@ export class HudController {
       }
     }, 1000);
 
-    // Update FPS readout
     setInterval(() => {
       if (fpsEl && this.scene) {
         const qTag = this.scene.isLowQuality ? 'PERF' : 'ULTRA';
@@ -59,15 +48,13 @@ export class HudController {
       }
     }, 1000);
 
-    // Scale level change event from camera
     this.scene.canvas.addEventListener('scalelevelchange', (e) => {
-      const { scaleLevel, logZoom } = e.detail;
+      const { scaleLevel } = e.detail;
       scaleBadges.forEach((badge) => {
         const lvl = parseInt(badge.dataset.scale);
         badge.classList.toggle('active', lvl === scaleLevel);
       });
 
-      // Update Scale Ruler text
       if (rulerEl) {
         if (scaleLevel === SCALE.GALAXY) {
           rulerEl.textContent = '100,000 ly (~30.6 kpc)';
@@ -80,9 +67,6 @@ export class HudController {
     });
   }
 
-  // -----------------------------------------------------------
-  // Left Panel: Search & Categorized Object Tree
-  // -----------------------------------------------------------
   _initObjectTree() {
     const searchInput = document.getElementById('hud-search');
     const categoryTabs = document.querySelectorAll('.tree-tab-btn');
@@ -111,17 +95,77 @@ export class HudController {
     const q = (searchInput?.value || '').toLowerCase().trim();
     tree.innerHTML = '';
 
-    // 1. Galaxy Features
+    // 1. Solar System Planets & Sun
+    const solData = systems[0];
+    const solPlanets = solData.planets || [];
+
+    if (this.activeCategory === 'all' || this.activeCategory === 'solar') {
+      const filteredSolar = solPlanets.filter((p) => !q || p.name.toLowerCase().includes(q) || 'solar system sun earth mars jupiter'.includes(q));
+
+      if (filteredSolar.length > 0 || (!q && (this.activeCategory === 'solar' || this.activeCategory === 'all'))) {
+        const header = document.createElement('div');
+        header.className = 'tree-group-header';
+        header.textContent = 'SOLAR SYSTEM (SOL)';
+        tree.appendChild(header);
+
+        // Sun item
+        if (!q || 'sol sun'.includes(q)) {
+          const sunItem = document.createElement('button');
+          sunItem.className = 'tree-item star-item';
+          sunItem.innerHTML = `
+            <span class="tree-dot" style="background:#fff3d6"></span>
+            <span class="tree-name">☀️ Sol (The Sun)</span>
+            <span class="tree-dist">0.0 ly (G2V)</span>
+          `;
+          sunItem.addEventListener('click', () => {
+            this.scene.flyToSol();
+            this.openInspector({
+              name: 'Sol (The Sun)',
+              hostStar: 'Milky Way Core',
+              spectralType: 'G2V',
+              distanceLy: 0,
+              massSolar: 1.0,
+              radiusSolar: 1.0,
+              surfaceTempK: 5778,
+              discoveryMethod: 'In-Situ Observation',
+              discoveryYear: 'Native',
+              habitabilityStatus: 'non-habitable',
+              habitability: 'Stellar Furnace',
+              summary: 'Our home yellow dwarf star. Generates energy via thermonuclear proton-proton chain fusion, sustaining the Solar System.'
+            });
+          });
+          tree.appendChild(sunItem);
+        }
+
+        // Planetary items
+        filteredSolar.forEach((p) => {
+          const item = document.createElement('button');
+          const isEarth = p.id === 'earth';
+          item.className = 'tree-item planet-item' + (isEarth ? ' habitable' : '');
+          item.innerHTML = `
+            <span class="tree-dot" style="background:${p.color || '#38bdf8'}"></span>
+            <span class="tree-name">${isEarth ? '🌍 ' : ''}${p.name}</span>
+            <span class="tree-dist">${p.semiMajorAxisAu} AU</span>
+          `;
+          item.addEventListener('click', () => {
+            this.scene.flyToObject(p);
+            this.openInspector(p);
+          });
+          tree.appendChild(item);
+        });
+      }
+    }
+
+    // 2. Galactic Structures
     const galaxyFeatures = [
       { id: 'sgra', name: 'Sagittarius A*', type: 'Supermassive Black Hole', distanceLy: 0, isGC: true },
-      { id: 'sol-star', name: 'Sol (Solar System)', type: 'G2V Main Sequence', distanceLy: 26673, isSol: true },
       { id: 'orion-arm', name: 'Orion-Cygnus Arm', type: 'Galactic Spiral Spur', distanceLy: 26673 },
       { id: 'perseus-arm', name: 'Perseus Arm', type: 'Major Spiral Arm', distanceLy: 32000 },
       { id: 'bulge', name: 'Galactic Bulge & Bar', type: 'Dense Stellar Core', distanceLy: 0 }
     ];
 
     if (this.activeCategory === 'all' || this.activeCategory === 'galaxy') {
-      const filteredFeatures = galaxyFeatures.filter((f) => !q || f.name.toLowerCase().includes(q) || f.type.toLowerCase().includes(q));
+      const filteredFeatures = galaxyFeatures.filter((f) => !q || f.name.toLowerCase().includes(q));
       if (filteredFeatures.length > 0) {
         const header = document.createElement('div');
         header.className = 'tree-group-header';
@@ -134,11 +178,10 @@ export class HudController {
           item.innerHTML = `
             <span class="tree-dot" style="background:#ffaa33"></span>
             <span class="tree-name">${feat.name}</span>
-            <span class="tree-dist">${feat.distanceLy ? feat.distanceLy.toLocaleString() + ' ly' : 'GC (l=0, b=0)'}</span>
+            <span class="tree-dist">${feat.distanceLy ? feat.distanceLy.toLocaleString() + ' ly' : 'Galactic Core'}</span>
           `;
           item.addEventListener('click', () => {
             if (feat.isGC) this.scene.flyToSgrA();
-            else if (feat.isSol) this.scene.flyToSol();
             else this.scene.flyToGalaxy();
             this.openInspector(feat);
           });
@@ -147,13 +190,13 @@ export class HudController {
       }
     }
 
-    // 2. Star Systems
+    // 3. Exoplanet Host Stars
     if (this.activeCategory === 'all' || this.activeCategory === 'stars') {
-      const filteredStars = systems.filter((s) => !q || s.name.toLowerCase().includes(q) || s.spectralType.toLowerCase().includes(q));
+      const filteredStars = systems.filter((s) => s.id !== 'sol' && (!q || s.name.toLowerCase().includes(q)));
       if (filteredStars.length > 0) {
         const header = document.createElement('div');
         header.className = 'tree-group-header';
-        header.textContent = 'HOST STAR SYSTEMS';
+        header.textContent = 'EXOPLANET HOST STARS';
         tree.appendChild(header);
 
         filteredStars.forEach((star) => {
@@ -162,12 +205,11 @@ export class HudController {
           item.innerHTML = `
             <span class="tree-dot" style="background:${star.color || '#ffddaa'}"></span>
             <span class="tree-name">${star.name} (${star.spectralType})</span>
-            <span class="tree-dist">${star.distanceLy ? star.distanceLy.toFixed(1) + ' ly' : '0 ly'}</span>
+            <span class="tree-dist">${star.distanceLy ? star.distanceLy.toFixed(1) + ' ly' : ''}</span>
           `;
           item.addEventListener('click', () => {
             this.scene.systemRenderer.loadSystem(star.id);
-            if (star.id === 'sol') this.scene.flyToSol();
-            else this.scene.flyToObject(star);
+            this.scene.flyToObject(star);
             this.openInspector(star);
           });
           tree.appendChild(item);
@@ -175,7 +217,7 @@ export class HudController {
       }
     }
 
-    // 3. Exoplanets
+    // 4. Exoplanets Catalogue
     if (this.activeCategory === 'all' || this.activeCategory === 'exoplanets') {
       const filteredPlanets = exoplanets.filter((p) => !q || p.name.toLowerCase().includes(q) || p.hostStar.toLowerCase().includes(q));
       if (filteredPlanets.length > 0) {
@@ -188,7 +230,6 @@ export class HudController {
           const item = document.createElement('button');
           const isHab = p.habitabilityStatus === 'habitable';
           item.className = 'tree-item planet-item' + (isHab ? ' habitable' : '');
-          item.setAttribute('aria-label', `Select ${p.name}`);
           item.innerHTML = `
             <span class="tree-dot" style="background:${isHab ? '#10b981' : '#38bdf8'}"></span>
             <span class="tree-name">${p.name}</span>
@@ -204,9 +245,6 @@ export class HudController {
     }
   }
 
-  // -----------------------------------------------------------
-  // Right Panel: Inspector Dossier
-  // -----------------------------------------------------------
   _initInspector() {
     const closeBtn = document.getElementById('inspector-close');
     if (closeBtn) {
@@ -232,7 +270,6 @@ export class HudController {
     const panel = document.getElementById('hud-inspector');
     if (!panel) return;
 
-    // Accessibility live region announcement
     const liveAnnouncer = document.getElementById('mc-aria-live');
     if (liveAnnouncer) {
       liveAnnouncer.textContent = `Selected ${item.name}. Detailed dossier loaded.`;
@@ -240,17 +277,20 @@ export class HudController {
 
     document.getElementById('insp-name').textContent = item.name;
     document.getElementById('insp-host').textContent = item.hostStar || item.spectralType || item.type || 'Milky Way Core';
-    document.getElementById('insp-dist').textContent = item.distanceLy ? `${item.distanceLy.toLocaleString()} ly (${(item.distanceLy / 3.26156).toFixed(1)} pc)` : 'Galactic Centre';
+    document.getElementById('insp-dist').textContent = (item.distanceLy !== undefined && item.distanceLy !== null)
+      ? (item.distanceLy === 0 ? '0.0 ly (Solar System)' : `${item.distanceLy.toLocaleString()} ly (${(item.distanceLy / 3.26156).toFixed(1)} pc)`)
+      : 'Galactic Centre';
+
     document.getElementById('insp-mass').textContent = item.massEarth ? `${item.massEarth} M⊕` : (item.massSolar ? `${item.massSolar} M☉` : '—');
     document.getElementById('insp-rad').textContent  = item.radiusEarth ? `${item.radiusEarth} R⊕` : (item.radiusSolar ? `${item.radiusSolar} R☉` : '—');
     document.getElementById('insp-period').textContent = item.orbitalPeriodDays ? `${item.orbitalPeriodDays} Earth Days` : (item.periodDays ? `${item.periodDays} d` : '—');
     document.getElementById('insp-temp').textContent = item.surfaceTempK ? `${item.surfaceTempK} K (${(item.surfaceTempK - 273.15).toFixed(1)} °C)` : (item.equilibriumTempK ? `${item.equilibriumTempK} K` : '—');
-    document.getElementById('insp-method').textContent = item.discoveryMethod || 'Direct Astrometry / EHT';
-    document.getElementById('insp-year').textContent = item.discoveryYear || '2022';
+    document.getElementById('insp-method').textContent = item.discoveryMethod || 'Direct Astrometry';
+    document.getElementById('insp-year').textContent = item.discoveryYear || 'Native / Historical';
 
     const hzEl = document.getElementById('insp-hz');
     if (hzEl) {
-      const isHab = item.habitabilityStatus === 'habitable' || item.habitability === 'Conservative Habitable Zone';
+      const isHab = item.habitabilityStatus === 'habitable' || item.habitability?.includes('Habitable Zone');
       hzEl.textContent = isHab ? 'CONSERVATIVE HABITABLE ZONE' : (item.habitability || 'NON-HABITABLE ENVIRONMENT');
       hzEl.style.color = isHab ? '#10b981' : '#ff5544';
     }
@@ -260,10 +300,11 @@ export class HudController {
       summaryEl.textContent = item.summary || item.type || 'Astrophysical deep field object catalogue data.';
     }
 
-    // Provenance badge
     const provEl = document.getElementById('insp-provenance');
     if (provEl) {
-      provEl.textContent = 'SOURCE: NASA EXOPLANET ARCHIVE · GAIA DR3';
+      provEl.textContent = item.distanceLy === 0
+        ? 'SOURCE: NASA JPL / IAU EPHEMERIDES'
+        : 'SOURCE: NASA EXOPLANET ARCHIVE · GAIA DR3';
     }
 
     panel.classList.add('open');
@@ -278,25 +319,20 @@ export class HudController {
     }
   }
 
-  // -----------------------------------------------------------
-  // Bottom Bar: Telemetry Readouts
-  // -----------------------------------------------------------
   _initBottomTelemetry() {
     const coordsEl = document.getElementById('mc-telemetry-coords');
     const distSolEl = document.getElementById('mc-telemetry-dsol');
     const posXYZEl = document.getElementById('mc-telemetry-xyz');
 
     this.scene.canvas.addEventListener('cameramove', (e) => {
-      const { cameraPos, target } = e.detail;
+      const { cameraPos } = e.detail;
       if (coordsEl) {
-        // Approximate galactic longitude based on camera azimuth
         const azimuth = Math.atan2(cameraPos.z, cameraPos.x) * (180 / Math.PI);
         const elevation = Math.atan2(cameraPos.y, Math.sqrt(cameraPos.x * cameraPos.x + cameraPos.z * cameraPos.z)) * (180 / Math.PI);
         coordsEl.textContent = formatGalacticCoords(azimuth, elevation);
       }
 
       if (distSolEl) {
-        // Distance from Sol (Sun is at SUN_GC_LY, 0, 0)
         const dSol = cameraPos.distanceTo(new THREE.Vector3(26673, 0, 0));
         distSolEl.textContent = `D☉: ${Math.round(dSol).toLocaleString()} ly`;
       }
@@ -307,9 +343,6 @@ export class HudController {
     });
   }
 
-  // -----------------------------------------------------------
-  // Simulation Time Engine Controls
-  // -----------------------------------------------------------
   _initTimeEngine() {
     const timeBtns = document.querySelectorAll('.mc-time-btn');
     const scrubber = document.getElementById('mc-time-scrubber');
@@ -330,7 +363,6 @@ export class HudController {
       });
     }
 
-    // Update simulated calendar date display
     setInterval(() => {
       if (dateDisplay && this.scene) {
         const d = new Date(this.scene.startDate.getTime() + this.scene.simDaysElapsed * 86400000);
@@ -342,9 +374,6 @@ export class HudController {
     }, 100);
   }
 
-  // -----------------------------------------------------------
-  // Layer Toggles
-  // -----------------------------------------------------------
   _initLayerToggles() {
     document.querySelectorAll('.mc-layer-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -375,11 +404,13 @@ export class HudController {
     if (btnSolView) {
       btnSolView.addEventListener('click', () => this.scene.flyToSol());
     }
+
+    const btnEarthView = document.getElementById('btn-recenter-earth');
+    if (btnEarthView) {
+      btnEarthView.addEventListener('click', () => this.scene.flyToEarth());
+    }
   }
 
-  // -----------------------------------------------------------
-  // 2D Galactic Radar Minimap
-  // -----------------------------------------------------------
   _initMinimap() {
     const canvas = document.getElementById('hud-minimap');
     if (!canvas) return;
@@ -392,18 +423,15 @@ export class HudController {
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
 
-    // Dark grid background
     ctx.fillStyle = 'rgba(2, 6, 18, 0.9)';
     ctx.fillRect(0, 0, c.width, c.height);
 
-    // Galactic ring boundary
     ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(c.width / 2, c.height / 2, c.width * 0.44, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Sgr A* Core dot
     ctx.fillStyle = '#ffaa33';
     ctx.beginPath();
     ctx.arc(c.width / 2, c.height / 2, 3, 0, Math.PI * 2);
@@ -412,7 +440,6 @@ export class HudController {
     const GALAXY_R = 52000;
     const scale = (c.width * 0.44) / GALAXY_R;
 
-    // Exoplanet marker points
     this.scene.exoMarkers.forEach((m) => {
       const px = c.width / 2 + m.position.x * scale;
       const py = c.height / 2 - m.position.z * scale;
@@ -422,7 +449,6 @@ export class HudController {
       ctx.fill();
     });
 
-    // Sol dot ("YOU ARE HERE")
     const sx = c.width / 2 + 26673 * scale;
     const sy = c.height / 2;
     ctx.fillStyle = '#ffff55';
@@ -430,7 +456,6 @@ export class HudController {
     ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Camera position & frustum direction
     const cam = this.scene.camera;
     const cx = c.width / 2 + cam.position.x * scale;
     const cy = c.height / 2 - cam.position.z * scale;
@@ -440,7 +465,6 @@ export class HudController {
     ctx.arc(cx, cy, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Frustum cone line towards target
     const tx = c.width / 2 + this.scene.camCtrl.target.x * scale;
     const ty = c.height / 2 - this.scene.camCtrl.target.z * scale;
     ctx.beginPath();
@@ -449,9 +473,6 @@ export class HudController {
     ctx.stroke();
   }
 
-  // -----------------------------------------------------------
-  // Mobile Drawer Navigation (< 900px)
-  // -----------------------------------------------------------
   _initMobileDrawers() {
     const drawerTabs = document.querySelectorAll('.mc-drawer-tab');
     drawerTabs.forEach((tab) => {

@@ -1,7 +1,7 @@
 /**
  * GALAXY PARTICLE RENDERER
- * 4 logarithmic spiral arms, dust lanes, barred central bulge,
- * Sgr A* black hole accretion disk, and persistent Sol ("YOU ARE HERE") marker.
+ * 4 logarithmic spiral arms, dust lanes, barred bulge,
+ * rotating Sgr A* accretion disk, and pulsing Sol marker.
  */
 import * as THREE from 'three';
 
@@ -12,7 +12,7 @@ const VERT = `
   void main() {
     vColor = color;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * (420.0 / -mv.z);
+    gl_PointSize = size * (440.0 / -mv.z);
     gl_Position  = projectionMatrix * mv;
   }
 `;
@@ -23,19 +23,18 @@ const FRAG = `
     float d = length(gl_PointCoord - 0.5) * 2.0;
     float a = smoothstep(1.0, 0.0, d);
     if (a < 0.01) discard;
-    gl_FragColor = vec4(vColor, a * 0.92);
+    gl_FragColor = vec4(vColor, a * 0.94);
   }
 `;
 
-// IAU 2016 standard: Sol distance from Sgr A* ~ 8,178 pc * 3.26156 ly/pc = 26,673 ly
-export const SUN_GC_LY = 8178 * 3.26156;
+export const SUN_GC_LY = 8178 * 3.26156; // 26,673 ly
 export const SUN_WORLD_POS = new THREE.Vector3(SUN_GC_LY, 0, 0);
 
 const ARM_COLORS = [
-  [0.72, 0.82, 1.00], // Perseus Arm
-  [0.65, 0.74, 0.98], // Scutum-Centaurus Arm
-  [0.80, 0.85, 1.00], // Sagittarius-Carina Arm
-  [0.68, 0.78, 0.95], // Outer / Norma Arm
+  [0.72, 0.82, 1.00], // Perseus
+  [0.65, 0.74, 0.98], // Scutum-Centaurus
+  [0.80, 0.85, 1.00], // Sagittarius-Carina
+  [0.68, 0.78, 0.95], // Outer / Norma
 ];
 
 function spiralPos(t, spread, armAngleOffset) {
@@ -54,6 +53,7 @@ export class GalaxyRenderer {
     this.scene = scene;
     this.group = new THREE.Group();
     scene.add(this.group);
+    this.time = 0;
     this._build();
   }
 
@@ -67,7 +67,7 @@ export class GalaxyRenderer {
     const ARMS = 4;
     const perArm = Math.floor(N * 0.65 / ARMS);
 
-    // 1. Spiral arms
+    // 1. Spiral Arms with Dust Lanes and HII regions
     for (let a = 0; a < ARMS; a++) {
       const angleOff = (a / ARMS) * Math.PI * 2;
       const c = ARM_COLORS[a];
@@ -78,38 +78,35 @@ export class GalaxyRenderer {
         positions[idx*3+1] = y;
         positions[idx*3+2] = z;
 
-        // Dust lane contrast (inner arm edge is slightly darker/warmer)
-        const isDust = Math.random() < 0.15;
+        const isDust = Math.random() < 0.14;
         if (isDust) {
           colors[idx*3]   = 0.24 + Math.random() * 0.08;
           colors[idx*3+1] = 0.18 + Math.random() * 0.05;
           colors[idx*3+2] = 0.14;
-          sizes[idx] = 1.0;
+          sizes[idx] = 1.1;
         } else {
-          // Young luminous OB stars & HII nebula pink/blue tints
           const isHII = Math.random() < 0.06;
           if (isHII) {
             colors[idx*3]   = 0.95;
             colors[idx*3+1] = 0.42;
-            colors[idx*3+2] = 0.65;
-            sizes[idx] = 2.4;
+            colors[idx*3+2] = 0.68;
+            sizes[idx] = 2.5;
           } else {
             colors[idx*3]   = c[0] + (Math.random() - 0.5) * 0.06;
             colors[idx*3+1] = c[1] + (Math.random() - 0.5) * 0.06;
             colors[idx*3+2] = c[2] + (Math.random() - 0.5) * 0.04;
-            sizes[idx] = 1.2 + Math.random() * 2.2;
+            sizes[idx] = 1.3 + Math.random() * 2.2;
           }
         }
         idx++;
       }
     }
 
-    // 2. Dense barred central bulge
+    // 2. Dense Barred Central Bulge
     const bulgeN = Math.floor(N * 0.24);
     for (let i = 0; i < bulgeN && idx < N; i++) {
       const r = Math.pow(Math.random(), 2.2) * 6500;
       const theta = Math.random() * Math.PI * 2;
-      // Bar-elongation along theta = ~45 deg
       const barFactor = 1.35 * Math.cos(theta);
       positions[idx*3]   = (r + barFactor * 800) * Math.cos(theta);
       positions[idx*3+1] = (Math.random() - 0.5) * 1600 * (1 - r / 6500);
@@ -119,11 +116,11 @@ export class GalaxyRenderer {
       colors[idx*3]   = warm;
       colors[idx*3+1] = warm * 0.76;
       colors[idx*3+2] = warm * 0.45;
-      sizes[idx] = 1.6 + Math.random() * 2.6;
+      sizes[idx] = 1.7 + Math.random() * 2.5;
       idx++;
     }
 
-    // 3. Galactic Halo & Globular background
+    // 3. Galactic Halo
     while (idx < N) {
       const r = 6000 + Math.random() * 45000;
       const theta = Math.random() * Math.PI * 2;
@@ -134,7 +131,7 @@ export class GalaxyRenderer {
       colors[idx*3]   = 0.65 + Math.random() * 0.15;
       colors[idx*3+1] = 0.70 + Math.random() * 0.15;
       colors[idx*3+2] = 0.88 + Math.random() * 0.10;
-      sizes[idx] = 0.9;
+      sizes[idx] = 1.0;
       idx++;
     }
 
@@ -154,71 +151,85 @@ export class GalaxyRenderer {
     this.points = new THREE.Points(geo, mat);
     this.group.add(this.points);
 
-    // 4. Sagittarius A* Radio Source & Accretion Disk
-    const sgrCore = new THREE.Mesh(
-      new THREE.SphereGeometry(320, 24, 24),
-      new THREE.MeshBasicMaterial({ color: 0xffaa22, transparent: true, opacity: 0.95 })
-    );
-    sgrCore.position.set(0, 0, 0);
-    this.group.add(sgrCore);
-
-    // Accretion disk ring
-    const ringGeo = new THREE.RingGeometry(400, 1400, 48);
+    // 4. Sgr A* Accretion Ring
+    const ringGeo = new THREE.RingGeometry(420, 1600, 64);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xff8800,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.55,
       blending: THREE.AdditiveBlending
     });
-    const sgrRing = new THREE.Mesh(ringGeo, ringMat);
-    sgrRing.rotation.x = Math.PI / 2;
-    this.group.add(sgrRing);
+    this.sgrRing = new THREE.Mesh(ringGeo, ringMat);
+    this.sgrRing.rotation.x = Math.PI / 2;
+    this.group.add(this.sgrRing);
 
-    // 5. Persistent Sol Marker ("YOU ARE HERE")
-    this._buildSolMarker();
-  }
+    // Sgr A* event horizon shadow & glow
+    const sgrCore = new THREE.Mesh(
+      new THREE.SphereGeometry(320, 24, 24),
+      new THREE.MeshBasicMaterial({ color: 0xffaa22, transparent: true, opacity: 0.95 })
+    );
+    this.group.add(sgrCore);
 
-  _buildSolMarker() {
+    // 5. Persistent Sol ("YOU ARE HERE") Marker
     this.solGroup = new THREE.Group();
     this.solGroup.position.copy(SUN_WORLD_POS);
 
-    // Glowing sun sphere
     const sunMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(140, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xffffaa, transparent: true, opacity: 1.0 })
+      new THREE.SphereGeometry(150, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffffbb })
     );
     this.solGroup.add(sunMesh);
 
-    // Concentric pulse beacon
-    const beaconGeo = new THREE.RingGeometry(180, 260, 32);
+    const beaconGeo = new THREE.RingGeometry(200, 320, 32);
     const beaconMat = new THREE.MeshBasicMaterial({
       color: 0xffdd44,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.65
+      opacity: 0.7
     });
-    const beacon = new THREE.Mesh(beaconGeo, beaconMat);
-    beacon.rotation.x = Math.PI / 2;
-    this.solGroup.add(beacon);
+    this.solBeacon = new THREE.Mesh(beaconGeo, beaconMat);
+    this.solBeacon.rotation.x = Math.PI / 2;
+    this.solGroup.add(this.solBeacon);
 
-    // Thin leader line from Sol down to Galactic plane / center
+    // Leader line to Sgr A*
     const lineGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(-SUN_GC_LY, 0, 0) // vector pointing to Sgr A*
+      new THREE.Vector3(-SUN_GC_LY, 0, 0)
     ]);
     const lineMat = new THREE.LineDashedMaterial({
-      color: 0x5588cc,
+      color: 0x38bdf8,
       dashSize: 400,
       gapSize: 200,
       transparent: true,
-      opacity: 0.35
+      opacity: 0.4
     });
     const leaderLine = new THREE.Line(lineGeo, lineMat);
     leaderLine.computeLineDistances();
     this.solGroup.add(leaderLine);
 
     this.group.add(this.solGroup);
+  }
+
+  update(dt, reducedMotion = false) {
+    if (reducedMotion) return;
+    this.time += dt;
+
+    // Slow majestic cosmic spiral rotation
+    if (this.points) {
+      this.points.rotation.y += dt * 0.016;
+    }
+
+    // Accretion disk relativistic spin
+    if (this.sgrRing) {
+      this.sgrRing.rotation.z += dt * 0.09;
+    }
+
+    // Sol beacon breathing pulsation
+    if (this.solBeacon) {
+      const pulse = 1.0 + 0.15 * Math.sin(this.time * 2.8);
+      this.solBeacon.scale.set(pulse, pulse, pulse);
+    }
   }
 
   setVisible(v) { this.group.visible = v; }

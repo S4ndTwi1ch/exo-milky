@@ -1,7 +1,6 @@
 /**
  * THREE.JS MISSION CONTROL MASTER COORDINATOR
- * Manages WebGL context, adaptive LOD, raycasting, simulation time engine,
- * layers, and cross-scale transitions.
+ * Connects Galaxy, Starfield, Solar System, Camera Kinematics, and Raycasting.
  */
 import * as THREE from 'three';
 import { CameraController, SCALE } from './camera-controller.js';
@@ -27,12 +26,12 @@ export class MissionControlScene {
   constructor(canvas) {
     this.canvas   = canvas;
     this.clock    = new THREE.Clock();
-    this.onSelect = null; // callback(planet/object)
+    this.onSelect = null;
 
     // Simulation Time Engine
-    this.timeScale      = 1.0;   // 0 (paused), 1x, 10x, 100x, 1000x, -10x
+    this.timeScale      = 1.0;
     this.simDaysElapsed = 0;
-    this.startDate      = new Date(2026, 9, 26); // Oct 26, 2026
+    this.startDate      = new Date(2026, 9, 26);
 
     // Adaptive Performance Monitor
     this.fps = 60;
@@ -56,9 +55,9 @@ export class MissionControlScene {
     this._onResize();
 
     this.scene  = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(55, this.canvas.clientWidth / this.canvas.clientHeight, 2, 6e6);
+    this.camera = new THREE.PerspectiveCamera(55, this.canvas.clientWidth / this.canvas.clientHeight, 2, 8e6);
 
-    // Sub-systems
+    // Instantiate 3D subsystems
     this.starfield      = new Starfield(this.scene);
     this.galaxyRenderer = new GalaxyRenderer(this.scene);
     this.systemRenderer = new SystemRenderer(this.scene);
@@ -66,20 +65,17 @@ export class MissionControlScene {
 
     this._buildExoMarkers();
 
-    // Event Listeners
     window.addEventListener('resize', () => this._onResize());
-    this.canvas.addEventListener('click', e => this._onClick(e));
-    this.canvas.addEventListener('dblclick', e => this._onDoubleClick(e));
+    this.canvas.addEventListener('click', (e) => this._onClick(e));
+    this.canvas.addEventListener('dblclick', (e) => this._onDoubleClick(e));
 
-    // Handle Tab Visibility to save battery
     document.addEventListener('visibilitychange', () => {
       this.isPausedForHidden = document.hidden;
     });
 
-    // WebGL Context recovery
-    this.canvas.addEventListener('webglcontextlost', e => {
+    this.canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
-      console.warn('WebGL Context Lost. Awaiting restoration...');
+      console.warn('WebGL Context Lost. Awaiting recovery...');
     });
 
     this.canvas.addEventListener('webglcontextrestored', () => {
@@ -94,7 +90,7 @@ export class MissionControlScene {
     this.exoMarkers = [];
     const geo = new THREE.SphereGeometry(120, 10, 10);
 
-    exoplanets.forEach(p => {
+    exoplanets.forEach((p) => {
       const pos = getExoWorldPos(p);
       if (!pos) return;
       const isHabitable = p.habitabilityStatus === 'habitable';
@@ -134,8 +130,11 @@ export class MissionControlScene {
     raycaster.setFromCamera(ndc, this.camera);
     raycaster.params.Mesh = { threshold: 400 };
 
-    // Raycast exoplanet markers + local stars
-    const targets = [...this.exoMarkers, ...this.systemRenderer.starMarkers];
+    const targets = [
+      ...this.exoMarkers,
+      ...this.systemRenderer.starMarkers,
+      ...this.systemRenderer.planets
+    ];
     const hits = raycaster.intersectObjects(targets);
     return hits.length > 0 ? hits[0].object : null;
   }
@@ -156,12 +155,13 @@ export class MissionControlScene {
 
     const dt = this.clock.getDelta();
 
-    // 1. Advance simulation time
-    this.simDaysElapsed += dt * this.timeScale * 12.0; // 1 second real-time = 12 simulated days at 1x
-    this.systemRenderer.update(this.simDaysElapsed);
+    // 1. Advance simulation time & drive animations
+    this.simDaysElapsed += dt * this.timeScale * 14.0;
+    this.galaxyRenderer.update(dt, this.reducedMotion);
+    this.systemRenderer.update(this.simDaysElapsed, dt);
     this.starfield.update(dt, this.reducedMotion);
 
-    // 2. Camera kinematics
+    // 2. Camera kinematics with smooth damping
     this.camCtrl.update(dt);
 
     // 3. Adaptive FPS Monitor
@@ -172,32 +172,39 @@ export class MissionControlScene {
       this.frameCount = 0;
       this.fpsTimer = 0;
 
-      // Auto step down if FPS drops below 45
       if (this.fps < 45 && !this.isLowQuality) {
         this.isLowQuality = true;
         this.renderer.setPixelRatio(1.0);
-        console.warn('FPS below 45: Stepping down to performance quality.');
       }
     }
 
-    // 4. Render
+    // 4. Render frame
     this.renderer.render(this.scene, this.camera);
   }
 
   flyToObject(obj) {
     if (!obj) return;
+
+    // Check if it's a Solar System planet
+    const solPlanets = systems[0].planets.map(p => p.name.toLowerCase());
+    const isSolPlanet = solPlanets.includes((obj.name || '').toLowerCase());
+
+    if (isSolPlanet) {
+      this.systemRenderer.loadSystem('sol');
+      this.camCtrl.flyTo(SUN_WORLD_POS, 4.2, this.reducedMotion);
+      return;
+    }
+
     if (obj.isPlanet || obj.name) {
       const marker = this.exoMarkers.find(m => m.userData.name === obj.name);
       if (marker) {
-        // Load system if available
         const hostStar = obj.hostStar || '';
         const matchingSys = systems.find(s => s.name.toLowerCase().includes(hostStar.toLowerCase())) || systems[0];
         this.systemRenderer.loadSystem(matchingSys.id);
-        this.camCtrl.flyTo(marker.position, 4.2, this.reducedMotion);
+        this.camCtrl.flyTo(marker.position, 4.4, this.reducedMotion);
       } else {
-        // Star or feature
         const pos = obj._worldPos || SUN_WORLD_POS;
-        this.camCtrl.flyTo(pos, 3.2, this.reducedMotion);
+        this.camCtrl.flyTo(pos, 3.4, this.reducedMotion);
       }
     }
   }
@@ -208,7 +215,12 @@ export class MissionControlScene {
 
   flyToSol() {
     this.systemRenderer.loadSystem('sol');
-    this.camCtrl.flyTo(SUN_WORLD_POS, 4.4, this.reducedMotion);
+    this.camCtrl.flyTo(SUN_WORLD_POS, 3.8, this.reducedMotion);
+  }
+
+  flyToEarth() {
+    this.systemRenderer.loadSystem('sol');
+    this.camCtrl.flyTo(SUN_WORLD_POS, 4.6, this.reducedMotion);
   }
 
   flyToSgrA() {
