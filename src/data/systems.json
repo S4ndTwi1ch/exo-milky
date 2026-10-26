@@ -1,0 +1,152 @@
+[
+  {
+    "id": "sol",
+    "name": "Sol (Solar System)",
+    "spectralType": "G2V",
+    "distanceLy": 0.0,
+    "luminositySolar": 1.0,
+    "massSolar": 1.0,
+    "radiusSolar": 1.0,
+    "ra": "00h 00m 00s",
+    "dec": "+00° 00′ 00″",
+    "raDeg": 0.0,
+    "decDeg": 0.0,
+    "color": "#fff3d6",
+    "planets": [
+      { "id": "mercury", "name": "Mercury", "semiMajorAxisAu": 0.387, "periodDays": 87.97, "radiusEarth": 0.383, "color": "#a8a59b" },
+      { "id": "venus", "name": "Venus", "semiMajorAxisAu": 0.723, "periodDays": 224.7, "radiusEarth": 0.949, "color": "#d9b37c" },
+      { "id": "earth", "name": "Earth", "semiMajorAxisAu": 1.000, "periodDays": 365.25, "radiusEarth": 1.000, "color": "#4d90d6" },
+      { "id": "mars", "name": "Mars", "semiMajorAxisAu": 1.524, "periodDays": 686.98, "radiusEarth": 0.532, "color": "#cf5f3a" },
+      { "id": "jupiter", "name": "Jupiter", "semiMajorAxisAu": 5.204, "periodDays": 4332.6, "radiusEarth": 10.97, "color": "#d69f69" },
+      { "id": "saturn", "name": "Saturn", "semiMajorAxisAu": 9.582, "periodDays": 10759.2, "radiusEarth": 9.14, "color": "#e0c289", "hasRings": true }
+    ]
+  },
+  {
+    "id": "proxima-centauri",
+    "name": "Proxima Centauri",
+    "spectralType": "M5.5V",
+    "distanceLy": 4.2465,
+    "luminositySolar": 0.0017,
+    "massSolar": 0.122,
+    "radiusSolar": 0.154,
+    "raDeg": 217.42896,
+    "decDeg": -62.67947,
+    "color": "#ff6847",
+    "planets": [
+      { "id": "proxima-d", "name": "Proxima d", "semiMajorAxisAu": 0.0289, "periodDays": 5.122, "radiusEarth": 0.81, "color": "#8f6759" },
+      { "id": "proxima-b", "name": "Proxima b", "semiMajorAxisAu": 0.0485, "periodDays": 11.186, "radiusEarth": 1.03, "color": "#4a7a8c" }
+    ]
+  },
+  {
+    "id": "trappist-1",
+    "name": "TRAPPIST-1",
+    "spectralType": "M8V",
+    "distanceLy": 40.66,
+    "luminositySolar": 0.00055,
+    "massSolar": 0.0898,
+    "radiusSolar": 0.121,
+    "raDeg": 346.6224,
+    "decDeg": -5.0413,
+    "color": "#ff4c30",
+    "planets": [
+      { "id": "trappist-1b", "name": "TRAPPIST-1 b", "semiMajorAxisAu": 0.0115, "periodDays": 1.511, "radiusEarth": 1.116, "color": "#7a5c4e" },
+      { "id": "trappist-1c", "name": "TRAPPIST-1 c", "semiMajorAxisAu": 0.0158, "periodDays": 2.422, "radiusEarth": 1.097, "color": "#a88065" },
+      { "id": "trappist-1d", "name": "TRAPPIST-1 d", "semiMajorAxisAu": 0.0223, "periodDays": 4.050, "radiusEarth": 0.788, "color": "#7a7e85" },
+      { "id": "trappist-1e", "name": "TRAPPIST-1 e", "semiMajorAxisAu": 0.0293, "periodDays": 6.100, "radiusEarth": 0.920, "color": "#3f7796" },
+      { "id": "trappist-1f", "name": "TRAPPIST-1 f", "semiMajorAxisAu": 0.0385, "periodDays": 9.207, "radiusEarth": 1.045, "color": "#658ca3" },
+      { "id": "trappist-1g", "name": "TRAPPIST-1 g", "semiMajorAxisAu": 0.0469, "periodDays": 12.353, "radiusEarth": 1.129, "color": "#8ba3b5" },
+      { "id": "trappist-1h", "name": "TRAPPIST-1 h", "semiMajorAxisAu": 0.0619, "periodDays": 18.766, "radiusEarth": 0.775, "color": "#9eb3c2" }
+    ]
+  },
+  {
+    "id": "kepler-452",
+    "name": "Kepler-452",
+    "spectralType": "G2V",
+    "distanceLy": 1799.0,
+    "luminositySolar": 1.20,
+    "massSolar": 1.037,
+    "radiusSolar": 1.11,
+    "raDeg": 296.0037,
+    "decDeg": 44.2776,
+    "color": "#fff2cc",
+    "planets": [
+      { "id": "kepler-452b", "name": "Kepler-452b", "semiMajorAxisAu": 1.046, "periodDays": 384.84, "radiusEarth": 1.63, "color": "#3f738f" }
+    ]
+  },
+  {
+    "id": "55-cancri",
+    "name": "55 Cancri A (Copernicus)",
+    "spectralType": "G8V",
+    "distanceLy": 41.06,
+    "luminositySolar": 0.589,
+    "massSolar": 0.905,
+    "radiusSolar": 0.943,
+    "raDeg": 133.1492,
+    "decDeg": 28.3308,
+    "color": "#ffdf99",
+    "planets": [
+      { "id": "55-cancri-e", "name": "55 Cancri e", "semiMajorAxisAu": 0.0154, "periodDays": 0.737, "radiusEarth": 1.875, "color": "#d94b29" },
+      { "id": "55-cancri-b", "name": "55 Cancri b", "semiMajorAxisAu": 0.1134, "periodDays": 14.65, "radiusEarth": 12.0, "color": "#b87d4b" }
+    ]
+  },
+  {
+    "id": "hd-189733",
+    "name": "HD 189733",
+    "spectralType": "K1-V",
+    "distanceLy": 64.52,
+    "luminositySolar": 0.328,
+    "massSolar": 0.846,
+    "radiusSolar": 0.781,
+    "raDeg": 300.1821,
+    "decDeg": 22.7109,
+    "color": "#ffb86c",
+    "planets": [
+      { "id": "hd-189733-b", "name": "HD 189733 b", "semiMajorAxisAu": 0.0313, "periodDays": 2.219, "radiusEarth": 12.7, "color": "#174880" }
+    ]
+  },
+  {
+    "id": "wasp-12",
+    "name": "WASP-12",
+    "spectralType": "F9V",
+    "distanceLy": 1410.0,
+    "luminositySolar": 2.10,
+    "massSolar": 1.434,
+    "radiusSolar": 1.657,
+    "raDeg": 97.6367,
+    "decDeg": 29.6722,
+    "color": "#f8f9fa",
+    "planets": [
+      { "id": "wasp-12b", "name": "WASP-12b", "semiMajorAxisAu": 0.0229, "periodDays": 1.091, "radiusEarth": 21.3, "color": "#c43d2b" }
+    ]
+  },
+  {
+    "id": "k2-18",
+    "name": "K2-18",
+    "spectralType": "M2.5V",
+    "distanceLy": 124.3,
+    "luminositySolar": 0.024,
+    "massSolar": 0.495,
+    "radiusSolar": 0.469,
+    "raDeg": 172.5605,
+    "decDeg": 7.5884,
+    "color": "#ff8754",
+    "planets": [
+      { "id": "k2-18b", "name": "K2-18b", "semiMajorAxisAu": 0.1591, "periodDays": 32.94, "radiusEarth": 2.61, "color": "#336b75" }
+    ]
+  },
+  {
+    "id": "barnards-star",
+    "name": "Barnard's Star",
+    "spectralType": "M4V",
+    "distanceLy": 5.96,
+    "luminositySolar": 0.0033,
+    "massSolar": 0.144,
+    "radiusSolar": 0.196,
+    "raDeg": 269.4521,
+    "decDeg": 4.6933,
+    "color": "#ff5c3b",
+    "planets": [
+      { "id": "barnards-star-b", "name": "Barnard's Star b", "semiMajorAxisAu": 0.0229, "periodDays": 3.153, "radiusEarth": 0.74, "color": "#8c6053" }
+    ]
+  }
+]

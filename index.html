@@ -36,7 +36,7 @@
         <div class="telemetry-bar" aria-label="Observatory Coordinates and Time">
           <div class="telemetry-item">
             <span class="t-label">TARGET SGR A*</span>
-            <span class="t-val">RA 17ʰ 45ᵐ 40ˢ · DEC −29° 00′ 28″</span>
+            <span class="t-val">RA 17ʰ 45ᵐ 40ˢ · DEC −29° 00′ 28″
           </div>
           <div class="telemetry-item hide-mobile">
             <span class="t-label">SOLAR ORBITAL VELOCITY</span>
@@ -80,83 +80,172 @@
 
     <!-- Main Content Flow -->
     <main id="main-content">
-      <!-- SECTION 1: HERO & INTERACTIVE SPIRAL GALAXY SIMULATOR -->
-      <section id="hero" class="hero-section" aria-label="Milky Way Galaxy Visualizer">
-        <!-- Canvas Background -->
-        <canvas id="galaxy-canvas" aria-label="Interactive 3D simulation of the Milky Way spiral galaxy and Sagittarius A*" role="img"></canvas>
+      <!-- SECTION 1: MISSION CONTROL 3D EXPLORER -->
+      <!-- SECTION 1: MISSION CONTROL 3D EXPLORER -->
+      <section id="hero" class="hero-section mc-hero" aria-label="Milky Way 3D Mission Control">
 
-        <!-- Galaxy Viewport Overlay HUD -->
-        <div class="galaxy-hud">
-          <div class="hud-tag">
-            <span class="pulsing-dot" aria-hidden="true"></span>
-            <span>LIVE PARTICLE ENGINE · 4,200 STELLAR KINEMATICS</span>
+        <!-- 3D WebGL Canvas -->
+        <canvas id="mc-canvas" aria-label="Interactive 3D Milky Way and exoplanetary systems simulation" role="img"></canvas>
+
+        <!-- Screen-reader live region -->
+        <div id="mc-aria-live" class="visually-hidden" aria-live="polite"></div>
+
+        <!-- Top Bar HUD: Mission Control Header -->
+        <div class="mc-top-bar" role="region" aria-label="Observatory Status">
+          <div class="mc-brand-block">
+            <span class="mc-mission-tag">DEEP FIELD SURVEY • VOL. IV</span>
+            <span class="mc-mission-title">SAGITTARIUS ATLAS</span>
           </div>
 
-          <div class="hud-controls" role="toolbar" aria-label="Galaxy View Controls">
-            <button id="btn-recenter" class="hud-btn" title="Reset Viewpoint">
-              <span>RECENTER VIEW</span>
-            </button>
-            <button id="btn-toggle-arms" class="hud-btn active" title="Toggle Spiral Arm Annotations" aria-pressed="true">
-              <span>ARM LABELS</span>
-            </button>
-            <button id="btn-toggle-solar" class="hud-btn active" title="Highlight Solar System Position" aria-pressed="true">
-              <span>SOLAR POSITION</span>
-            </button>
-            <div class="hud-zoom">
-              <label for="galaxy-zoom" class="visually-hidden">Galaxy Zoom Level</label>
-              <span class="zoom-label">ZOOM</span>
-              <input type="range" id="galaxy-zoom" min="0.6" max="2.4" step="0.05" value="1.0" aria-label="Galaxy Zoom Level" />
+          <!-- Dynamic Scale Ruler -->
+          <div class="mc-scale-ruler" aria-label="Current visual scale ruler">
+            <span class="mc-ruler-tick">|</span>
+            <span class="mc-ruler-line"></span>
+            <span class="mc-ruler-tick">|</span>
+            <span id="mc-ruler-val" class="mc-ruler-text">100,000 ly (~30.6 kpc)</span>
+          </div>
+
+          <!-- Scale Level Indicator Pills -->
+          <div class="mc-scale-selector" role="group" aria-label="Scale level selector">
+            <button class="scale-pill active" data-scale="0">GALAXY</button>
+            <button class="scale-pill" data-scale="1">LOCAL</button>
+            <button class="scale-pill" data-scale="2">SYSTEM</button>
+          </div>
+
+          <!-- UTC Clock & FPS Telemetry -->
+          <div class="mc-top-telemetry">
+            <span id="mc-utc-clock" class="mc-clock-mono">2026-10-26 12:00:00 UTC</span>
+            <span id="mc-fps" class="mc-fps-badge">60 FPS · ULTRA</span>
+          </div>
+        </div>
+
+        <!-- Left Panel: Object Navigator -->
+        <aside id="hud-left" class="mc-panel mc-left" aria-label="Object navigator">
+          <div class="mc-panel-header">
+            <div class="mc-header-row">
+              <span class="mc-eyebrow">OBJECT NAVIGATOR</span>
+              <span class="mc-panel-sub">DEEP FIELD CATALOGUE</span>
             </div>
           </div>
+
+          <!-- Category filter tabs -->
+          <div class="tree-tab-row" role="tablist" aria-label="Catalogue categories">
+            <button class="tree-tab-btn active" data-cat="all" role="tab">ALL</button>
+            <button class="tree-tab-btn" data-cat="galaxy" role="tab">GALAXY</button>
+            <button class="tree-tab-btn" data-cat="stars" role="tab">STARS</button>
+            <button class="tree-tab-btn" data-cat="exoplanets" role="tab">EXO</button>
+          </div>
+
+          <!-- Search filter input -->
+          <div class="mc-search-row">
+            <input id="hud-search" type="search" placeholder="Search systems or planets…" aria-label="Search exoplanets" autocomplete="off" />
+          </div>
+
+          <!-- Object tree list -->
+          <div id="hud-object-tree" class="mc-object-tree" role="listbox" aria-label="Catalogue objects">
+            <!-- Populated dynamically by HudController -->
+          </div>
+
+          <!-- Quick Navigation Controls -->
+          <div class="mc-quick-nav" role="toolbar" aria-label="Quick viewpoints">
+            <button id="btn-recenter-galaxy" class="mc-quick-btn" title="Recenter on Milky Way">Milky Way</button>
+            <button id="btn-recenter-sol" class="mc-quick-btn" title="Fly to Solar System">Sol (Sun)</button>
+          </div>
+        </aside>
+
+        <!-- Right Panel: Inspector Dossier -->
+        <aside id="hud-inspector" class="mc-panel mc-right" aria-label="Object dossier inspector" hidden>
+          <div class="mc-panel-header">
+            <div class="mc-header-row">
+              <span class="mc-eyebrow">OBJECT DOSSIER</span>
+              <button id="inspector-close" class="mc-close-btn" aria-label="Close dossier">✕</button>
+            </div>
+          </div>
+
+          <div class="dossier-scroll-area">
+            <h2 id="insp-name" class="insp-name">—</h2>
+            <div class="insp-provenance-tag" id="insp-provenance">SOURCE: NASA EXOPLANET ARCHIVE · GAIA DR3</div>
+
+            <div class="insp-data-grid">
+              <div class="insp-row"><span class="insp-lbl">HOST STAR / CLASS</span><span id="insp-host" class="insp-val">—</span></div>
+              <div class="insp-row"><span class="insp-lbl">DISTANCE FROM SOL</span><span id="insp-dist" class="insp-val">—</span></div>
+              <div class="insp-row"><span class="insp-lbl">MASS</span><span id="insp-mass" class="insp-val">—</span></div>
+              <div class="insp-row"><span class="insp-lbl">RADIUS</span><span id="insp-rad" class="insp-val">—</span></div>
+              <div class="insp-row"><span class="insp-lbl">ORBITAL PERIOD</span><span id="insp-period" class="insp-val">—</span></div>
+              <div class="insp-row"><span class="insp-lbl">SURFACE / EQ TEMP</span><span id="insp-temp" class="insp-val">—</span></div>
+              <div class="insp-row"><span class="insp-lbl">DETECTION METHOD</span><span id="insp-method" class="insp-val">—</span></div>
+              <div class="insp-row"><span class="insp-lbl">DISCOVERY YEAR</span><span id="insp-year" class="insp-val">—</span></div>
+              <div class="insp-row"><span class="insp-lbl">HABITABILITY</span><span id="insp-hz" class="insp-hz">—</span></div>
+            </div>
+
+            <p id="insp-summary" class="insp-summary"></p>
+
+            <div class="insp-actions">
+              <button id="btn-jump-transit" class="insp-action-btn">
+                <span>LAB: TRANSIT SIMULATION</span>
+              </button>
+              <button id="btn-jump-compare" class="insp-action-btn secondary">
+                <span>STUDIO: SCALE COMPARATOR</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Top-Right Galactic Radar Minimap -->
+        <div class="mc-minimap-wrap" aria-label="Galactic radar minimap">
+          <div class="minimap-header">
+            <span class="mc-minimap-label">GALACTIC RADAR</span>
+            <span class="minimap-sub">SGR A* ORIENTED</span>
+          </div>
+          <canvas id="hud-minimap" width="140" height="140" aria-label="Galactic Radar Display"></canvas>
         </div>
 
-        <!-- Editorial Hero Title Card -->
-        <div class="hero-content">
-          <div class="hero-metadata">
-            <span class="badge-catalogue">BARRED SPIRAL GALAXY · SBb CLASSIFICATION</span>
-            <span class="meta-separator" aria-hidden="true">/</span>
-            <span class="meta-dist">LOCAL GROUP MEMBER 02</span>
+        <!-- Bottom Telemetry & Controls Bar -->
+        <div class="mc-bottom-bar" role="toolbar" aria-label="Observatory Telemetry and Simulation Controls">
+
+          <!-- Left: Real-Time Celestial Coordinates Readout -->
+          <div class="mc-telemetry-cluster" aria-label="Astrometric readouts">
+            <span id="mc-telemetry-coords" class="t-badge">l = 0.00°, b = 0.00°</span>
+            <span id="mc-telemetry-dsol" class="t-badge hide-mobile">D☉: 26,673 ly</span>
+            <span id="mc-telemetry-xyz" class="t-badge hide-mobile">XYZ: [0, 0, 0] ly</span>
           </div>
 
-          <h1 class="hero-title">
-            <span class="title-sub">AN ASTROPHYSICAL EXPLORATION OF</span>
-            <span class="title-main">THE MILKY WAY</span>
-            <span class="title-serif">&amp; HER DAUGHTER WORLDS</span>
-          </h1>
-
-          <p class="hero-lead">
-            Spinning through intergalactic void at 2.1 million km/h, our celestial home houses over 100 billion stars and an estimated 5,500+ confirmed exoplanets. Traverse the spiral arms, witness the central supermassive singularity, and peer into the atmospheric chemistry of alien horizons.
-          </p>
-
-          <div class="hero-actions">
-            <a href="#galactic-metrics" class="primary-action-btn">
-              <span>EXPLORE ARCHITECTURE</span>
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <polyline points="19 12 12 19 5 12"></polyline>
-              </svg>
-            </a>
-            <a href="#exoplanet-archive" class="secondary-action-btn">
-              <span>EXOPLANET OBSERVATORY</span>
-            </a>
+          <!-- Center: Simulation Time Engine Controls -->
+          <div class="mc-time-cluster" aria-label="Orbital simulation time controls">
+            <span id="mc-sim-date" class="sim-date-tag">SIM: 2026-10-26</span>
+            <div class="time-rate-group">
+              <button class="mc-time-btn" data-speed="0" title="Pause simulation">❚❚</button>
+              <button class="mc-time-btn active" data-speed="1" title="Real-time 1x">1x</button>
+              <button class="mc-time-btn" data-speed="10" title="Accelerated 10x">10x</button>
+              <button class="mc-time-btn" data-speed="100" title="High speed 100x">100x</button>
+              <button class="mc-time-btn" data-speed="1000" title="Extreme speed 1000x">1000x</button>
+              <button class="mc-time-btn" data-speed="-10" title="Reverse -10x">◄◄</button>
+            </div>
+            <input id="mc-time-scrubber" type="range" min="0" max="3650" value="0" aria-label="Simulation date scrubber" />
           </div>
 
-          <!-- Interaction Prompt -->
-          <div class="canvas-hint" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
-            </svg>
-            <span>Click &amp; drag to rotate galaxy · Scroll to zoom · Hover core to target Sgr A*</span>
+          <!-- Right: Layer Toggles -->
+          <div class="mc-layer-cluster" aria-label="Layer visibility controls">
+            <button class="mc-layer-btn active" data-layer="galaxy" aria-pressed="true">GALAXY</button>
+            <button class="mc-layer-btn active" data-layer="exoplanets" aria-pressed="true">EXO</button>
+            <button class="mc-layer-btn active" data-layer="orbits" aria-pressed="true">ORBITS</button>
+            <button class="mc-layer-btn active" data-layer="hz" aria-pressed="true">HZ</button>
+            <button class="mc-layer-btn active" data-layer="stars" aria-pressed="true">STARS</button>
           </div>
         </div>
 
-        <!-- Scroll Down Indicator -->
+        <!-- Mobile Drawer Tabs (< 900px) -->
+        <div class="mc-mobile-drawer-tabs" role="tablist" aria-label="Mobile panel switcher">
+          <button class="mc-drawer-tab active" data-target="hud-left">OBJECTS</button>
+          <button class="mc-drawer-tab" data-target="hud-inspector">DOSSIER</button>
+        </div>
+
+        <!-- Scroll Cue Indicator -->
         <div class="scroll-cue" aria-hidden="true">
           <span class="scroll-line"></span>
           <span class="scroll-text">DESCENT</span>
         </div>
       </section>
-
       <!-- SECTION 2: GALACTIC ANATOMY & ANIMATED METRICS -->
       <section id="galactic-metrics" class="section-container" aria-labelledby="metrics-heading">
         <div class="section-header">
@@ -210,7 +299,7 @@
             </div>
             <div class="metric-bar"><span style="width: 98%;"></span></div>
             <p class="metric-detail">
-              Dating from globular clusters such as NGC 6397. Formed barely 200–400 million years after the cosmic microwave background nucleosynthesis.
+              Dating from globular clusters such as NGC 6397. Formed barely 200â€“400 million years after the cosmic microwave background nucleosynthesis.
             </p>
           </article>
 
@@ -225,18 +314,18 @@
             </div>
             <div class="metric-bar"><span style="width: 65%;"></span></div>
             <p class="metric-detail">
-              Situated in the inner rim of the Orion–Cygnus Arm (Orion Spur), roughly 8.18 kiloparsecs from the galactic core, completing one cosmic orbit every 230 million years.
+              Situated in the inner rim of the Orionâ€“Cygnus Arm (Orion Spur), roughly 8.18 kiloparsecs from the galactic core, completing one cosmic orbit every 230 million years.
             </p>
           </article>
 
           <article class="metric-card" data-metric="core-blackhole">
             <div class="metric-header">
               <span class="metric-code">GRAV-05 // SAGITTARIUS A*</span>
-              <span class="metric-unit">SOLAR MASSES (M☉)</span>
+              <span class="metric-unit">SOLAR MASSES (Mâ˜‰)</span>
             </div>
             <div class="metric-value-wrapper">
               <span class="metric-number" data-target="4.15" data-decimals="2">0</span>
-              <span class="metric-symbol">×10⁶ M☉</span>
+              <span class="metric-symbol">×10â¶ Mâ˜‰</span>
             </div>
             <div class="metric-bar"><span style="width: 78%;"></span></div>
             <p class="metric-detail">
@@ -251,11 +340,11 @@
             </div>
             <div class="metric-value-wrapper">
               <span class="metric-number" data-target="1.54" data-decimals="2">0</span>
-              <span class="metric-symbol">×10¹² M☉</span>
+              <span class="metric-symbol">×10¹² Mâ˜‰</span>
             </div>
             <div class="metric-bar"><span style="width: 88%;"></span></div>
             <p class="metric-detail">
-              Approximately 85–90% of the Milky Way's gravitational pull arises from an extensive, spherical dark matter halo extending out to 650,000 light-years.
+              Approximately 85â€“90% of the Milky Way's gravitational pull arises from an extensive, spherical dark matter halo extending out to 650,000 light-years.
             </p>
           </article>
         </div>
@@ -387,7 +476,7 @@
                   <div class="sphere-lighting-tag">ROTATIONAL VISUALIZATION</div>
                 </div>
                 <div class="habitability-badge" id="modal-hz-badge">
-                  <span class="hz-icon">●</span>
+                  <span class="hz-icon">â—</span>
                   <span id="modal-hz-text">CONSERVATIVE HABITABLE ZONE</span>
                 </div>
               </div>
@@ -617,6 +706,101 @@
         </div>
       </section>
     </main>
+
+    
+      <!-- SECTION 6: SCIENTIFIC DATA & SOURCES -->
+      <section id="data-sources" class="section-container" aria-labelledby="sources-heading">
+        <div class="section-header">
+          <div class="section-eyebrow">ASTRONOMICAL PROVENANCE &amp; METHODOLOGY</div>
+          <h2 id="sources-heading" class="section-title">Observational Data &amp; Scientific Sources</h2>
+          <p class="section-description">
+            All orbital mechanics, stellar distances, and physical parameters throughout this atlas are derived from primary peer-reviewed astrophysical surveys. To preserve scientific integrity, observed metrics are strictly differentiated from illustrative visualizations.
+          </p>
+        </div>
+
+        <div class="sources-grid">
+          <div class="source-card">
+            <div class="source-badge">PRIMARY ARCHIVE</div>
+            <h3 class="source-name">NASA Exoplanet Archive</h3>
+            <p class="source-desc">
+              Planetary masses ($M_\oplus$), transit radii ($R_\oplus$), orbital semi-major axes ($AU$), equilibrium temperatures, and discovery confirmations sourced from the Planetary Systems (PS) and Composite Parameters (PSCompPars) tables.
+            </p>
+            <div class="source-meta">Dataset: IPAC/Caltech · DOI: 10.26133/NEA1 · Accessed 2026</div>
+          </div>
+
+          <div class="source-card">
+            <div class="source-badge">ASTROMETRIC SURVEY</div>
+            <h3 class="source-name">ESA Gaia Data Release 3 (Gaia DR3)</h3>
+            <p class="source-desc">
+              High-precision stellar trigonometric parallaxes ($ϖ$), proper motions, and distances from the Solar System to host stars and galactic cluster benchmarks. Coordinate conversions execute via IAU 1958 standard galactic poles.
+            </p>
+            <div class="source-meta">Dataset: European Space Agency · Gaia Collaboration (2022/2023)</div>
+          </div>
+
+          <div class="source-card">
+            <div class="source-badge">RADIO INTERFEROMETRY</div>
+            <h3 class="source-name">Event Horizon Telescope (EHT) &amp; GRAVITY</h3>
+            <p class="source-desc">
+              Central galactic coordinate origin ($l=0.0^\circ, b=0.0^\circ$) anchored to the Sagittarius A* compact radio source. Distance to Galactic Center calibrated to $R_0 = 8{,}178 \pm 26\text{ pc}$ ($26{,}673\text{ ly}$) following GRAVITY Collaboration astrometry.
+            </p>
+            <div class="source-meta">A&amp;A 625, L10 · ESO Very Large Telescope Interferometer</div>
+          </div>
+
+          <div class="source-card">
+            <div class="source-badge">ASTROBIOLOGICAL MODEL</div>
+            <h3 class="source-name">Habitable Zone Formulations</h3>
+            <p class="source-desc">
+              Conservative and optimistic circumstellar habitable zone boundaries calculated according to Kasting, Whitmire &amp; Reynolds (1993) and Kopparapu et al. (2013) based on stellar effective temperature and bolometric luminosity ($L_\star$).
+            </p>
+            <div class="source-meta">Astrophysical Journal, 765:131 · Kopparapu Model</div>
+          </div>
+        </div>
+
+        <!-- Empirical vs Illustrative Disclosure Table -->
+        <div class="sources-table-wrap">
+          <table class="sources-table" aria-label="Empirical vs Illustrative Attribution">
+            <thead>
+              <tr>
+                <th scope="col">Visual / Scientific Feature</th>
+                <th scope="col">Status</th>
+                <th scope="col">Scientific Source / Methodology</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Exoplanet Coordinates &amp; Distances</td>
+                <td><span class="tag-empirical">MEASURED</span></td>
+                <td>Gaia DR3 astrometry + NASA Exoplanet Archive coordinates converted to Galactic $(l, b, r)$.</td>
+              </tr>
+              <tr>
+                <td>Orbital Periods &amp; Semi-Major Axes</td>
+                <td><span class="tag-empirical">MEASURED</span></td>
+                <td>Photometric transit timing variations (Kepler/TESS) &amp; radial velocity doppler spectroscopy.</td>
+              </tr>
+              <tr>
+                <td>Planetary Radii &amp; Masses</td>
+                <td><span class="tag-empirical">MEASURED</span></td>
+                <td>Transit depth $ΔF/F = (R_p / R_\star)^2$ &amp; radial velocity Doppler semi-amplitude ($K$).</td>
+              </tr>
+              <tr>
+                <td>Habitable Zone Boundaries</td>
+                <td><span class="tag-calculated">CALCULATED</span></td>
+                <td>Kopparapu et al. insolation flux equations derived from stellar luminosity ($L_\star$).</td>
+              </tr>
+              <tr>
+                <td>Exoplanet Surface Textures &amp; Cloud Decks</td>
+                <td><span class="tag-illustrative">ILLUSTRATIVE</span></td>
+                <td>Procedural GLSL shader simulations based on thermal equilibrium &amp; chemical spectral classification. Direct spatial imaging unresolved.</td>
+              </tr>
+              <tr>
+                <td>Milky Way Spiral Arm Particle Density</td>
+                <td><span class="tag-illustrative">CALCULATED MODEL</span></td>
+                <td>Logarithmic spiral density wave equations ($p=0.22$) tuned to Reid et al. (2019) VLBA maser parallax surveys.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
     <!-- Editorial Scientific Colophon & Footer -->
     <footer class="atlas-footer" role="contentinfo">

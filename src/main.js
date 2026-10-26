@@ -9,8 +9,18 @@ import { TransitLaboratory } from "./transit-lab.js";
 import { PlanetRenderer } from "./planet-renderer.js";
 import { CosmicAudioEngine } from "./audio.js";
 import { EXOPLANETS, GALACTIC_ZONES } from "./exoplanets-data.js";
-
+import { MissionControlScene } from './engine/three-scene.js';
+import { HudController } from './hud/hud-controller.js';
 document.addEventListener("DOMContentLoaded", () => {
+
+  // 0. Three.js Mission Control 3D Scene
+  const mcCanvas = document.getElementById('mc-canvas');
+  let missionScene = null;
+  if (mcCanvas) {
+    missionScene = new MissionControlScene(mcCanvas);
+    new HudController(missionScene);
+  }
+
   // 1. Audio Engine
   const audio = new CosmicAudioEngine();
   const soundToggle = document.getElementById("sound-toggle");
@@ -51,6 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (galaxySim) {
       galaxySim.reducedMotion = reduced;
+    }
+    if (missionScene) {
+      missionScene.setReducedMotion(reduced);
     }
   }
 
